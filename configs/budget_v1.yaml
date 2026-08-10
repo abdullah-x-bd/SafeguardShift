@@ -1,6 +1,8 @@
-maximum_total_usd: 7.00
+maximum_total_usd: 5.20
 warning_fraction: 0.70
 hard_abort_fraction: 1.00
 estimated_max_output_tokens_per_turn: 350
 estimated_max_input_tokens_per_turn: 1800
-notes: Canonical collection aborts before a request if the cumulative provider-reported cost plus conservative projected request cost would exceed the configured maximum.
+canonical_max_agent_turns: 6
+conservative_projected_full_matrix_usd: 4.81
+notes: Canonical collection aborts before a request if cumulative provider-reported cost plus conservative projected request cost would exceed $5.20. The 6-turn canonical horizon and 350-token per-turn cap preserve the full 780-cell model panel while targeting a conservative list-price envelope below the hard ceiling.
