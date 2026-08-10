@@ -1,0 +1,23 @@
+name: Gemini generation billing audit
+on:
+  pull_request:
+    paths:
+      - .github/gemini-generation-audit-trigger.txt
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python scripts/audit_gemini_generations.py
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gemini-generation-audit-${{ github.run_id }}
+          path: results/gemini_generation_audit.json
+          retention-days: 30
