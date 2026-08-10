@@ -12,12 +12,12 @@ from crisisbench.scoring import score_trajectory
 
 CONDITIONS=("full","relevant_ablation","irrelevant_ablation","substitute","compound_ablation")
 MODEL_SPECS={
-    "gpt41": ModelSpec("openai/gpt-4.1-mini","openai"),
-    "gemini": ModelSpec("google/gemini-2.5-flash-lite","google-vertex"),
-    "deepseek": ModelSpec("deepseek/deepseek-v3.2","deepinfra"),
-    "mistral": ModelSpec("mistralai/mistral-small-3.2-24b-instruct","deepinfra"),
-    "gpt54": ModelSpec("openai/gpt-5.4","openai",temperature=None),
-    "claude": ModelSpec("anthropic/claude-sonnet-5","anthropic",temperature=None),
+    "gpt41": ModelSpec("openai/gpt-4.1-mini","openai",conservative_request_usd=0.003),
+    "gemini": ModelSpec("google/gemini-2.5-flash-lite","google-vertex",conservative_request_usd=0.001,reasoning={"enabled":False}),
+    "deepseek": ModelSpec("deepseek/deepseek-v3.2","deepinfra",conservative_request_usd=0.001),
+    "mistral": ModelSpec("mistralai/mistral-small-3.2-24b-instruct","parasail",conservative_request_usd=0.001),
+    "gpt54": ModelSpec("openai/gpt-5.4","openai",temperature=None,conservative_request_usd=0.025),
+    "claude": ModelSpec("anthropic/claude-sonnet-5","anthropic",temperature=None,conservative_request_usd=0.03),
 }
 
 
@@ -45,7 +45,7 @@ def main() -> None:
     data_path=outdir/f"{args.shard_id}.jsonl"
     cost_path=outdir/f"{args.shard_id}_cost.json"
     gate=CostGate(args.max_cost)
-    client=OpenRouterClient(cost_gate=gate,conservative_request_usd=0.02)
+    client=OpenRouterClient(cost_gate=gate)
     spec=MODEL_SPECS[args.model_key]
     completed=0
     error=None
