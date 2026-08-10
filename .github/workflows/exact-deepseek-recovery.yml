@@ -1,0 +1,31 @@
+name: Exact DeepSeek canonical recovery
+on:
+  pull_request:
+    paths:
+      - .github/exact-deepseek-trigger.txt
+permissions:
+  contents: read
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e .
+      - name: Recover fixed missing DeepSeek cells
+        run: >-
+          python scripts/run_cells.py
+          --model-key deepseek
+          --cells 'CB-CY-001:full,CB-CY-001:relevant_ablation,CB-CY-001:irrelevant_ablation,CB-CY-001:substitute,CB-CY-001:compound_ablation,CB-CY-002:full,CB-CY-002:relevant_ablation,CB-CY-002:irrelevant_ablation,CB-CY-002:substitute,CB-CY-002:compound_ablation,CB-CY-003:full,CB-CY-003:relevant_ablation,CB-CY-003:irrelevant_ablation,CB-CY-003:substitute,CB-CY-003:compound_ablation,CB-CY-004:full,CB-CY-004:relevant_ablation,CB-CY-004:irrelevant_ablation,CB-CY-004:substitute,CB-CY-004:compound_ablation,CB-CY-005:full,CB-CY-005:relevant_ablation,CB-CY-005:irrelevant_ablation,CB-CY-005:substitute,CB-CY-005:compound_ablation,CB-CY-006:full,CB-CY-006:relevant_ablation,CB-CY-006:irrelevant_ablation,CB-CY-006:substitute,CB-CY-006:compound_ablation,CB-PH-006:compound_ablation,CB-CI-006:substitute,CB-CI-006:compound_ablation,CB-DR-006:relevant_ablation,CB-DR-006:irrelevant_ablation,CB-DR-006:substitute,CB-DR-006:compound_ablation'
+          --max-cost 0.12
+          --output results/private/exact/deepseek.jsonl
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: exact-deepseek-recovery-${{ github.run_id }}
+          path: results/private/exact/
+          retention-days: 30
