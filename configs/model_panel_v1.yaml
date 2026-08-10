@@ -2,7 +2,7 @@ panel_id: crisisbench-v1-openrouter-2026-08-11
 routing_policy:
   allow_fallbacks: false
   require_parameters: true
-  data_collection: deny
+  data_collection: allow
 backbone:
   - id: openai/gpt-4.1-mini
     provider: openai
@@ -24,4 +24,4 @@ frontier_diagnostic:
     provider: anthropic
     scope: diagnostic_subset
 diagnostic_task_count: 6
-note: Exact provider compatibility must pass the preflight endpoint check before canonical collection. A failed provider preflight is an amendment trigger, not permission for silent fallback.
+note: CrisisBench prompts are synthetic and contain no user data. Exact provider compatibility must pass the preflight endpoint check before canonical collection. Fallbacks remain disabled; a failed provider preflight is an amendment trigger, not permission for silent rerouting.
