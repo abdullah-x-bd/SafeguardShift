@@ -35,6 +35,7 @@ def main() -> None:
     ap.add_argument("--model", default="openai/gpt-4.1-mini")
     ap.add_argument("--provider", default="openai")
     ap.add_argument("--max-cost", type=float, default=0.50)
+    ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--output", default="results/private/pilot.jsonl")
     args = ap.parse_args()
     if not os.getenv("OPENROUTER_API_KEY"):
@@ -46,6 +47,9 @@ def main() -> None:
     for row in PILOTS:
         task = make_task(row)
         for condition in ("full", "relevant_ablation", "irrelevant_ablation", "substitute"):
+            if args.limit and n >= args.limit:
+                print(f"pilot stopped after {n} trajectories; cumulative=${gate.spent_usd:.4f}")
+                return
             env = CrisisEnvironment(task, condition)
             record = run_agent(client, spec, env)
             record["noncanonical"] = True
