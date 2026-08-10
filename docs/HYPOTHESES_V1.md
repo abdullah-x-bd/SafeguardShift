@@ -10,4 +10,4 @@
 
 **H5 Adaptive usefulness.** Safer adaptation does not collapse entirely into refusal; task-completion and utility preservation remain materially above zero under ablation.
 
-**H6 Ranking stability.** Cross-model safety rankings are not assumed to remain invariant across full and ablated institutional contexts; ranking stability is a pre-specified comparative outcome.
+**H6 Ranking stability.** Cross-model ordering on task completion and utility preservation is not assumed to remain invariant across full and ablated institutional contexts. Spearman rank correlation between the full-safeguard condition and each ablation condition is a pre-specified comparative outcome, reported separately for completion and utility rather than as a post-hoc composite safety score.
