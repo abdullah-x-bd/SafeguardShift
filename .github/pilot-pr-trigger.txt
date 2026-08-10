@@ -1,1 +1,1 @@
-run observable noncanonical OpenRouter pilot
+run observable noncanonical OpenRouter pilot after routing amendment
