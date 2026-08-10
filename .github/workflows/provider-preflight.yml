@@ -1,0 +1,28 @@
+name: OpenRouter provider preflight
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/provider-preflight-trigger.txt
+permissions:
+  contents: read
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e .
+      - name: Run six-model provider preflight
+        continue-on-error: true
+        run: python scripts/provider_preflight.py --max-cost 0.05 --output results/provider_preflight.json
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: crisisbench-provider-preflight-${{ github.run_id }}
+          path: results/provider_preflight.json
+          retention-days: 30
