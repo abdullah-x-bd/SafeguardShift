@@ -22,8 +22,11 @@ jobs:
       - run: python scripts/run_canonical.py --include-frontier --max-cost 7.0 --output results/private/canonical.jsonl
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      - run: python scripts/analyse_results.py --input results/private/canonical.jsonl --output results/v1/summary.json
       - uses: actions/upload-artifact@v4
         with:
           name: crisisbench-canonical-${{ github.run_id }}
-          path: results/private/canonical.jsonl
+          path: |
+            results/private/canonical.jsonl
+            results/v1/summary.json
           retention-days: 90
