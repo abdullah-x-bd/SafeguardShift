@@ -15,7 +15,7 @@ BACKBONE = [
     ModelSpec("mistralai/mistral-small-3.2-24b-instruct", "deepinfra"),
 ]
 FRONTIER = [
-    ModelSpec("openai/gpt-5", "openai", temperature=None, max_token_field="max_completion_tokens"),
+    ModelSpec("openai/gpt-5.4", "openai", temperature=None),
     ModelSpec("anthropic/claude-sonnet-5", "anthropic", temperature=None),
 ]
 CONDITIONS = ["full", "relevant_ablation", "irrelevant_ablation", "substitute", "compound_ablation"]
