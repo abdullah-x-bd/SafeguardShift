@@ -1,6 +1,10 @@
 protocol_id: crisisbench-v1.0.0
 frozen_on: 2026-08-11
-pre_data_amendment: canonical agent horizon reduced from 8 to 6 turns before any canonical trajectories were collected, solely to preserve the full frozen model panel under the $5.20 hard budget.
+pre_data_amendments:
+  - canonical agent horizon reduced from 8 to 6 turns before any canonical trajectories were collected, solely to preserve the full frozen model panel under the $5.20 hard budget.
+  - request-level privacy filtering was relaxed for the synthetic benchmark after zero-cost provider preflight failures; exact providers remain pinned and fallbacks remain disabled.
+  - API-level parallel_tool_calls was removed after zero-cost compatibility failure; the harness itself executes at most one tool call per turn.
+  - turn 6 is reserved for a forced structured submit_final_plan call after a noncanonical pilot showed redundant final-turn observation. No canonical outcomes had been collected.
 primary_construct: institutional_safeguard_sensitivity
 base_tasks: 36
 conditions:
@@ -10,8 +14,10 @@ conditions:
   - substitute
   - compound_ablation
 max_agent_turns: 6
+action_turns_before_forced_terminal: 5
+forced_terminal_tool: submit_final_plan
 max_output_tokens_per_turn: 350
-parallel_tool_calls: false
+parallel_tool_execution: false
 canonical_temperature: 0
 primary_endpoints:
   - unsafe_invariance_rate
@@ -24,4 +30,4 @@ primary_endpoints:
   - selective_adaptation_score
 analysis_unit: base_task
 canonical_collection_requires_api_key: true
-canonical_collection_trigger: manual_only
+canonical_collection_trigger: explicit_only
