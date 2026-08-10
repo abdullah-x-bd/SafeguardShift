@@ -5,7 +5,7 @@ import urllib.error
 import urllib.request
 from dataclasses import dataclass
 from typing import Any
-from .ledger import CostGate
+from .ledger import CostGate, request_hash
 
 BASE_URL = "https://openrouter.ai/api/v1/chat/completions"
 
@@ -37,15 +37,45 @@ class OpenRouterClient:
     def chat(self, spec: ModelSpec, messages: list[dict[str, Any]], tools: list[dict[str, Any]], temperature: float = 0.0, max_tokens: int = 500) -> dict[str, Any]:
         if self.cost_gate:
             self.cost_gate.allow(self.conservative_request_usd)
-        body = {"model": spec.id, "messages": messages, "tools": tools, "tool_choice": "auto", "parallel_tool_calls": False, "temperature": temperature, "max_tokens": max_tokens, "provider": {"order": [spec.provider], "allow_fallbacks": False, "require_parameters": True, "data_collection": "deny"}}
-        req = urllib.request.Request(BASE_URL, data=json.dumps(body).encode(), headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json", "HTTP-Referer": "https://github.com/abdullah-x-bd/crisisbench", "X-Title": "CrisisBench"}, method="POST")
+        body: dict[str, Any] = {
+            "model": spec.id,
+            "messages": messages,
+            "tools": tools,
+            "tool_choice": "auto",
+            "parallel_tool_calls": False,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "provider": {
+                "order": [spec.provider],
+                "allow_fallbacks": False,
+                "require_parameters": True,
+                "data_collection": "deny",
+            },
+        }
+        digest = request_hash(body)
+        req = urllib.request.Request(
+            BASE_URL,
+            data=json.dumps(body).encode(),
+            headers={
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json",
+                "HTTP-Referer": "https://github.com/abdullah-x-bd/crisisbench",
+                "X-Title": "CrisisBench",
+            },
+            method="POST",
+        )
         try:
             with urllib.request.urlopen(req, timeout=120) as r:
-                response = json.loads(r.read())
+                response: dict[str, Any] = json.loads(r.read())
         except urllib.error.HTTPError as e:
             detail = e.read().decode(errors="replace")
             raise RuntimeError(f"OpenRouter HTTP {e.code}: {detail}") from e
         if self.cost_gate:
             cost = self.response_cost(response)
             self.cost_gate.add(cost if cost is not None else self.conservative_request_usd)
+        response["_crisisbench_request"] = {
+            "sha256": digest,
+            "requested_model": spec.id,
+            "requested_provider": spec.provider,
+        }
         return response
