@@ -1,0 +1,56 @@
+name: CrisisBench canonical recovery
+on:
+  pull_request:
+    paths:
+      - .github/canonical-recovery-trigger.txt
+permissions:
+  contents: read
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 18
+      matrix:
+        include:
+          - {shard: gpt41-cyber, model: gpt41, domain: cyber_incident, cap: '0.08'}
+          - {shard: gpt41-disaster, model: gpt41, domain: disaster_response, cap: '0.08'}
+          - {shard: gpt41-governance, model: gpt41, domain: public_governance, cap: '0.08'}
+          - {shard: deepseek-cyber, model: deepseek, domain: cyber_incident, cap: '0.08'}
+          - {shard: deepseek-disaster, model: deepseek, domain: disaster_response, cap: '0.08'}
+          - {shard: deepseek-governance, model: deepseek, domain: public_governance, cap: '0.08'}
+          - {shard: gemini-health, model: gemini, domain: public_health, cap: '0.025'}
+          - {shard: gemini-cyber, model: gemini, domain: cyber_incident, cap: '0.025'}
+          - {shard: gemini-infra, model: gemini, domain: critical_infrastructure, cap: '0.025'}
+          - {shard: gemini-disaster, model: gemini, domain: disaster_response, cap: '0.025'}
+          - {shard: gemini-comms, model: gemini, domain: crisis_communication, cap: '0.025'}
+          - {shard: gemini-governance, model: gemini, domain: public_governance, cap: '0.025'}
+          - {shard: mistral-health, model: mistral, domain: public_health, cap: '0.03'}
+          - {shard: mistral-cyber, model: mistral, domain: cyber_incident, cap: '0.03'}
+          - {shard: mistral-infra, model: mistral, domain: critical_infrastructure, cap: '0.03'}
+          - {shard: mistral-disaster, model: mistral, domain: disaster_response, cap: '0.03'}
+          - {shard: mistral-comms, model: mistral, domain: crisis_communication, cap: '0.03'}
+          - {shard: mistral-governance, model: mistral, domain: public_governance, cap: '0.03'}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e .
+      - name: Run recovery shard
+        id: shard
+        continue-on-error: true
+        run: >-
+          python scripts/run_shard.py
+          --shard-id '${{ matrix.shard }}'
+          --model-key '${{ matrix.model }}'
+          --domains '${{ matrix.domain }}'
+          --max-cost '${{ matrix.cap }}'
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: recovery-shard-${{ matrix.shard }}
+          path: results/private/shards/
+          retention-days: 30
