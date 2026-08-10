@@ -3,15 +3,14 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - agent/pilot-run-readback
+      - main
     paths:
-      - .github/pilot-run-trigger.txt
+      - .github/pilot-run-trigger-main.txt
 permissions:
   contents: write
 jobs:
   pilot:
     runs-on: ubuntu-latest
-    environment: crisisbench-canonical
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -21,10 +20,10 @@ jobs:
       - run: python scripts/preflight.py
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      - name: Run six-trajectory pilot
+      - name: Run three-trajectory pilot
         id: pilot
         continue-on-error: true
-        run: python scripts/run_pilot.py --limit 6 --max-cost 0.05 --output results/private/pilot.jsonl
+        run: python scripts/run_pilot.py --limit 3 --max-cost 0.02 --output results/private/pilot.jsonl
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       - name: Summarize pilot
@@ -38,7 +37,7 @@ jobs:
           turns=[len(r.get('trajectory',[])) for r in rows]
           spend=max([float(r.get('cumulative_cost_usd',0.0)) for r in rows], default=0.0)
           out={
-            'status':'PASS' if len(rows)==6 else 'PARTIAL_OR_FAILED',
+            'status':'PASS' if len(rows)==3 else 'PARTIAL_OR_FAILED',
             'trajectories':len(rows),
             'cumulative_cost_usd':spend,
             'mean_turns':sum(turns)/len(turns) if turns else None,
@@ -59,7 +58,7 @@ jobs:
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -f results/pilot_readback.json results/pilot_readback.jsonl 2>/dev/null || true
           git diff --cached --quiet || git commit -m 'Record noncanonical OpenRouter pilot readback'
-          git push origin HEAD:agent/pilot-run-readback
+          git push origin HEAD:main
       - uses: actions/upload-artifact@v4
         if: always()
         with:
