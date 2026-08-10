@@ -1,0 +1,27 @@
+{
+  "acceptance_rule": "One designated accepted trajectory per frozen model-task-condition cell. Failed or partial Gemini and Mistral attempts were excluded by recovery provenance, not outcome. DeepSeek accepted existing same-provider cells plus exact missing-cell recovery only.",
+  "accepted_routes": {
+    "anthropic/claude-sonnet-5": "anthropic",
+    "deepseek/deepseek-v3.2": "deepinfra",
+    "google/gemini-2.5-flash-lite": "google-vertex",
+    "mistralai/mistral-small-3.2-24b-instruct": "venice",
+    "openai/gpt-4.1-mini": "openai",
+    "openai/gpt-5.4": "openai"
+  },
+  "accepted_run_sources": [
+    {"accepted": "GPT-4.1 public_health, critical_infrastructure, crisis_communication; DeepSeek available cells in the same domains; all GPT-5.4 and Claude diagnostic cells", "purpose": "first canonical", "run_id": 31427548076},
+    {"accepted": "GPT-4.1 cyber, disaster, governance except one missing cell; DeepSeek disaster and governance cells", "purpose": "domain recovery", "run_id": 31428518895},
+    {"accepted": "all 180 Gemini Google Vertex cells and all 180 Mistral Venice cells", "purpose": "final Gemini and Mistral recovery", "run_id": 31429725126},
+    {"accepted": "CB-PG-006 compound_ablation", "purpose": "exact GPT-4.1 recovery", "run_id": 31430377334},
+    {"accepted": "30 DeepSeek cyber cells plus seven exact gaps", "purpose": "parallel exact DeepSeek recovery", "run_id": 31431111071}
+  ],
+  "execution_amendments": [
+    "Agent horizon reduced from 8 to 6 turns before canonical data for budget.",
+    "Turn 6 reserved for forced submit_final_plan after a noncanonical pilot.",
+    "API-level parallel_tool_calls removed; the harness executes at most one tool call per turn.",
+    "Stale GPT-5 diagnostic endpoint replaced before canonical data with GPT-5.4.",
+    "Gemini accepted rerun used Google Vertex with reasoning disabled; malformed tool-call outputs were retained as model behavior.",
+    "Mistral Small 3.2 accepted rerun used Venice after Mistral and Parasail failed compatibility and DeepInfra was operationally overloaded.",
+    "DeepSeek remained on DeepInfra; only missing cells were recovered with bounded retries."
+  ]
+}
