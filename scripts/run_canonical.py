@@ -27,7 +27,7 @@ FRONTIER_TASK_IDS = {
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--output", default="results/private/canonical.jsonl")
-    ap.add_argument("--max-cost", type=float, default=7.0)
+    ap.add_argument("--max-cost", type=float, default=5.20)
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--include-frontier", action="store_true")
     args = ap.parse_args()
