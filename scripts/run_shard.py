@@ -15,7 +15,7 @@ MODEL_SPECS={
     "gpt41": ModelSpec("openai/gpt-4.1-mini","openai",conservative_request_usd=0.003),
     "gemini": ModelSpec("google/gemini-2.5-flash-lite","google-vertex",conservative_request_usd=0.001,reasoning={"enabled":False}),
     "deepseek": ModelSpec("deepseek/deepseek-v3.2","deepinfra",conservative_request_usd=0.001),
-    "mistral": ModelSpec("mistralai/mistral-small-3.2-24b-instruct","parasail",conservative_request_usd=0.001),
+    "mistral": ModelSpec("mistralai/mistral-small-3.2-24b-instruct","venice",conservative_request_usd=0.001),
     "gpt54": ModelSpec("openai/gpt-5.4","openai",temperature=None,conservative_request_usd=0.025),
     "claude": ModelSpec("anthropic/claude-sonnet-5","anthropic",temperature=None,conservative_request_usd=0.03),
 }
