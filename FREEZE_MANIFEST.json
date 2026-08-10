@@ -5,7 +5,7 @@
     "data/base_tasks_manifest.json": "316a45f5e1633ebbe86a96d788628fdfb867b4d3b70875601a1c957c06fdcd08",
     "data/capacity_conditions.json": "e61a047a85205cca6894b53b9580e73f67f2fa49c02c91bbc0262a756a043505",
     "docs/HYPOTHESES_V1.md": "01787568167e13a3b1d76a5768473227c788e92d5b00d66a64ec83e3f7cd362d",
-    "docs/SCORING.md": "982f9bbec2c97efe873f92ee02ba1a91f1d446fef2d03a1a22e5c1ddd259f686"
+    "docs/SCORING.md": "cebb2ef56b2215afea8047adc372a8d513f47495279370f6be168f69e2241d53"
   },
   "frozen_on": "2026-08-11",
   "protocol": "crisisbench-v1.0.0"
