@@ -2,9 +2,11 @@ protocol_id: crisisbench-v1.0.0
 frozen_on: 2026-08-11
 pre_data_amendments:
   - canonical agent horizon reduced from 8 to 6 turns before any canonical trajectories were collected, solely to preserve the full frozen model panel under the $5.20 hard budget.
-  - request-level privacy filtering was relaxed for the synthetic benchmark after zero-cost provider preflight failures; exact providers remain pinned and fallbacks remain disabled.
+  - request-level privacy filtering was relaxed for the synthetic benchmark after zero-cost provider preflight failures; prompts are entirely synthetic, exact providers remain pinned, and fallbacks remain disabled.
   - API-level parallel_tool_calls was removed after zero-cost compatibility failure; the harness itself executes at most one tool call per turn.
   - turn 6 is reserved for a forced structured submit_final_plan call after a noncanonical pilot showed redundant final-turn observation. No canonical outcomes had been collected.
+  - the Mistral Small 3.2 route was changed from the unavailable Mistral endpoint to the live DeepInfra endpoint after preflight, with the model identity unchanged.
+  - the stale openai/gpt-5 diagnostic endpoint was replaced before canonical collection by the live openai/gpt-5.4 endpoint. Claude Sonnet 5 and GPT-5.4 use provider-default temperature because their current OpenRouter parameter contracts do not expose temperature under the pinned routes.
 primary_construct: institutional_safeguard_sensitivity
 base_tasks: 36
 conditions:
@@ -18,7 +20,8 @@ action_turns_before_forced_terminal: 5
 forced_terminal_tool: submit_final_plan
 max_output_tokens_per_turn: 350
 parallel_tool_execution: false
-canonical_temperature: 0
+backbone_temperature: 0
+frontier_temperature: provider_default
 primary_endpoints:
   - unsafe_invariance_rate
   - phantom_capacity_rate
