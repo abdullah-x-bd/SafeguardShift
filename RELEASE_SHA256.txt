@@ -1,1 +1,1 @@
-78829dd75f8999e68cd49b248e411e566fe708bcbcb460e31b6751efff8b790d  crisisbench-v1.0.0-research-artifact.zip
+28edd993f6fdd0c17e4b269a018c1c5884508f3f6d9ca60645641ab572be027e  crisisbench-v1.0.0-research-artifact.zip
