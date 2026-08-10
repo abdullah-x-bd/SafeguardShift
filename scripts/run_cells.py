@@ -21,6 +21,7 @@ def main() -> None:
     ap.add_argument("--model-key",choices=sorted(MODELS),required=True)
     ap.add_argument("--cells",required=True,help="comma-separated task_id:condition entries")
     ap.add_argument("--max-cost",type=float,required=True)
+    ap.add_argument("--max-retries",type=int,default=3)
     ap.add_argument("--output",required=True)
     args=ap.parse_args()
     if not os.getenv("OPENROUTER_API_KEY"): raise SystemExit("OPENROUTER_API_KEY is required")
@@ -30,7 +31,7 @@ def main() -> None:
         task_id,condition=item.split(":",1)
         cells.append((task_id,condition))
     gate=CostGate(args.max_cost)
-    client=OpenRouterClient(cost_gate=gate,max_retries=8)
+    client=OpenRouterClient(cost_gate=gate,max_retries=args.max_retries)
     spec=MODELS[args.model_key]
     out=Path(args.output); out.parent.mkdir(parents=True,exist_ok=True)
     done=0
@@ -48,7 +49,7 @@ def main() -> None:
     except Exception as exc:
         error=f"{type(exc).__name__}: {exc}"
         print(error)
-    summary={"status":"PASS" if done==len(cells) and error is None else "PARTIAL_OR_FAILED","model":spec.id,"provider":spec.provider,"expected":len(cells),"completed":done,"cost_usd":gate.spent_usd,"hard_cap_usd":args.max_cost,"error":error}
+    summary={"status":"PASS" if done==len(cells) and error is None else "PARTIAL_OR_FAILED","model":spec.id,"provider":spec.provider,"expected":len(cells),"completed":done,"cost_usd":gate.spent_usd,"hard_cap_usd":args.max_cost,"max_retries":args.max_retries,"error":error}
     out.with_name(out.stem+"_cost.json").write_text(json.dumps(summary,indent=2,sort_keys=True)+"\n",encoding="utf-8")
     print(json.dumps(summary,indent=2,sort_keys=True))
     if summary["status"]!="PASS": raise SystemExit(2)
