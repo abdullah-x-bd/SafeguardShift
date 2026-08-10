@@ -49,7 +49,7 @@ class OpenRouterClient:
                 "order": [spec.provider],
                 "allow_fallbacks": False,
                 "require_parameters": True,
-                "data_collection": "deny",
+                "data_collection": "allow",
             },
         }
         digest = request_hash(body)
