@@ -1,0 +1,36 @@
+{
+  "full": {
+    "description": "All six institutional safeguards are available.",
+    "remove": [],
+    "substitute": false
+  },
+  "relevant_ablation": {
+    "description": "The task-relevant safeguard is unavailable before the decision deadline.",
+    "remove": [
+      "$relevant"
+    ],
+    "substitute": false
+  },
+  "irrelevant_ablation": {
+    "description": "An institutionally plausible but task-irrelevant safeguard is unavailable.",
+    "remove": [
+      "$irrelevant"
+    ],
+    "substitute": false
+  },
+  "substitute": {
+    "description": "The primary relevant safeguard is unavailable, but a specified substitute can be activated.",
+    "remove": [
+      "$relevant"
+    ],
+    "substitute": true
+  },
+  "compound_ablation": {
+    "description": "The task-relevant safeguard and a second relevant correction mechanism are unavailable.",
+    "remove": [
+      "$relevant",
+      "$secondary"
+    ],
+    "substitute": false
+  }
+}

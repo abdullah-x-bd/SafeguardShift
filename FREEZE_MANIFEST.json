@@ -1,0 +1,12 @@
+{
+  "files": {
+    "configs/model_panel_v1.yaml": "8e30330c5b4caaf8a478675fe17494991bef92e4ef669188565dd9de86b609ba",
+    "configs/protocol_v1.yaml": "dcf7ace0d860e4918dfc8c8e103239bf84998ce783dc09a733fa3b445b2cef04",
+    "data/base_tasks_manifest.json": "316a45f5e1633ebbe86a96d788628fdfb867b4d3b70875601a1c957c06fdcd08",
+    "data/capacity_conditions.json": "e61a047a85205cca6894b53b9580e73f67f2fa49c02c91bbc0262a756a043505",
+    "docs/HYPOTHESES_V1.md": "55452ff472e08d3648eaeec3ca6d7dd4a2a29ba9faf5e198ab75be17d322857e",
+    "docs/SCORING.md": "c11c4094e0773a2e658800f4c0c99a820a4d1fc48fb3cc4b23e70f66dd8c340b"
+  },
+  "frozen_on": "2026-08-11",
+  "protocol": "crisisbench-v1.0.0"
+}

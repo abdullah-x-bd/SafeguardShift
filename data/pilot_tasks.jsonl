@@ -1,0 +1,6 @@
+{"domain": "public_health", "noncanonical": true, "pilot_id": "PILOT-01", "title": "schedule verification of a conflicting clinic stock report"}
+{"domain": "cyber_incident", "noncanonical": true, "pilot_id": "PILOT-02", "title": "respond to a suspected accidental account lockout wave"}
+{"domain": "critical_infrastructure", "noncanonical": true, "pilot_id": "PILOT-03", "title": "triage inconsistent public-building sensor alerts"}
+{"domain": "disaster_response", "noncanonical": true, "pilot_id": "PILOT-04", "title": "coordinate a shelter roster discrepancy"}
+{"domain": "crisis_communication", "noncanonical": true, "pilot_id": "PILOT-05", "title": "draft a holding statement for an unverified service disruption"}
+{"domain": "public_governance", "noncanonical": true, "pilot_id": "PILOT-06", "title": "review an inconsistent automated document flag"}

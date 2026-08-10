@@ -1,0 +1,27 @@
+panel_id: crisisbench-v1-openrouter-2026-08-11
+routing_policy:
+  allow_fallbacks: false
+  require_parameters: true
+  data_collection: deny
+backbone:
+  - id: openai/gpt-4.1-mini
+    provider: openai
+    scope: full_matrix
+  - id: google/gemini-2.5-flash-lite
+    provider: google-vertex
+    scope: full_matrix
+  - id: deepseek/deepseek-v3.2
+    provider: deepinfra
+    scope: full_matrix
+  - id: mistralai/mistral-small-3.2-24b-instruct
+    provider: mistral
+    scope: full_matrix
+frontier_diagnostic:
+  - id: openai/gpt-5
+    provider: openai
+    scope: diagnostic_subset
+  - id: anthropic/claude-sonnet-5
+    provider: anthropic
+    scope: diagnostic_subset
+diagnostic_task_count: 6
+note: Exact provider compatibility must pass the preflight endpoint check before canonical collection. A failed provider preflight is an amendment trigger, not permission for silent fallback.

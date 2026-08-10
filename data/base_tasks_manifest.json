@@ -1,0 +1,8 @@
+{
+  "crisis_communication.jsonl": "b1e4d984a50d59cef6a02330dbe29245b51e01b263be465317a2537349a48467",
+  "critical_infrastructure.jsonl": "4ef2fecf1c3df6a94e7e53578da654a503a275a801958162c9bc94d4936ad0a4",
+  "cyber_incident.jsonl": "bf31b77ac3811b6ff97f4430b3c69c4480cb45f16ecc1d620ced25780e0da7b5",
+  "disaster_response.jsonl": "fbde761571ddccab3bdffe2303ce6ca1adb368815aaa33ee6691c95ecc47ab56",
+  "public_governance.jsonl": "877cd05f914c60fdc49fc3cef028b8f72ac26a4e19c72c52c7c843005212c561",
+  "public_health.jsonl": "8d9c50df9b6940877c3e01cb89d5a6c1ccbe149d92dc452450f6b48bfa2c36fe"
+}

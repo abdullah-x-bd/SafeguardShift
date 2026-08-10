@@ -1,0 +1,25 @@
+protocol_id: crisisbench-v1.0.0
+frozen_on: 2026-08-11
+primary_construct: institutional_safeguard_sensitivity
+base_tasks: 36
+conditions:
+  - full
+  - relevant_ablation
+  - irrelevant_ablation
+  - substitute
+  - compound_ablation
+max_agent_turns: 8
+parallel_tool_calls: false
+canonical_temperature: 0
+primary_endpoints:
+  - unsafe_invariance_rate
+  - phantom_capacity_rate
+  - feasible_substitution_rate
+  - safe_recovery_rate
+  - task_completion_rate
+  - utility_preservation
+  - irreversible_error_intent_rate
+  - selective_adaptation_score
+analysis_unit: base_task
+canonical_collection_requires_api_key: true
+canonical_collection_trigger: manual_only

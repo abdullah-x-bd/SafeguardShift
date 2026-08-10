@@ -1,221 +1,25 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="CrisisBench is a public evaluation suite for context-shifted catastrophic risk in low-capacity AI deployments." />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CrisisBench</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="assets/styles.css" />
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="page-noise" aria-hidden="true"></div>
-  <div class="orb orb-one" data-parallax="0.16" aria-hidden="true"></div>
-  <div class="orb orb-two" data-parallax="0.08" aria-hidden="true"></div>
-
-  <header class="site-header">
-    <a class="brand" href="#top" aria-label="CrisisBench home">
-      <span class="brand-mark"></span>
-      <span>CrisisBench</span>
-    </a>
-    <nav class="nav-links" aria-label="Primary navigation">
-      <a href="#problem">Problem</a>
-      <a href="#method">Method</a>
-      <a href="#rubric">Rubric</a>
-      <a href="#outputs">Outputs</a>
-    </nav>
+<main>
+  <header>
+    <p class="eyebrow">CrisisBench v1</p>
+    <h1>Institutional safeguard ablation for agentic AI safety evaluation.</h1>
+    <p class="lede">CrisisBench tests whether AI agents change what they do when the external mechanisms that normally verify, review, monitor, authorize, reverse, or safely execute high-stakes actions disappear.</p>
   </header>
-
-  <main id="top">
-    <section class="hero section-grid">
-      <div class="hero-copy reveal">
-        <p class="eyebrow">Context-shifted catastrophic risk evals</p>
-        <h1>Testing AI safety when institutions cannot catch the error.</h1>
-        <p class="hero-text">
-          CrisisBench is a public benchmark for evaluating whether frontier AI systems preserve safety under low-capacity deployment conditions, where weak state capacity, low education capacity, poor enforcement, limited expert review, and unreliable information can turn model error into cascading harm.
-        </p>
-        <div class="hero-actions">
-          <a class="button primary" href="https://github.com/abdullah-x-bd/crisisbench">View repository</a>
-          <a class="button secondary" href="#method">See benchmark design</a>
-        </div>
-      </div>
-      <aside class="hero-card reveal delay-one" aria-label="Benchmark summary">
-        <div class="card-glow"></div>
-        <p class="card-kicker">Core failure mode</p>
-        <h2>Institutional capacity blindness</h2>
-        <p>
-          A model gives advice that assumes competent institutions, trained reviewers, enforcement power, clean data, and expert oversight. The same answer may be fine in a high-capacity setting and dangerous in a fragile one.
-        </p>
-        <div class="signal-row">
-          <span>Paired scenarios</span>
-          <strong>High capacity vs low capacity</strong>
-        </div>
-        <div class="signal-row">
-          <span>Main metric</span>
-          <strong>ICSD</strong>
-        </div>
-      </aside>
-    </section>
-
-    <section id="problem" class="content-section reveal">
-      <p class="eyebrow">Why this matters</p>
-      <h2>Many AI failures are not catastrophic in isolation. They become dangerous when no one is able to correct them.</h2>
-      <p>
-        A hallucinated procedure can be caught by a trained team in a well-resourced institution. A weakly staffed office may copy it into real action. A public health message can be reviewed before release in one setting and posted directly during panic in another. A cyber response plan can pass through security review in one place and become the only guidance available in another.
-      </p>
-      <p>
-        CrisisBench studies this context shift. It asks whether models notice missing capacity and adapt their behavior, or whether they keep giving confident advice that depends on institutions the user does not have.
-      </p>
-    </section>
-
-    <section class="split-section" id="method">
-      <div class="section-heading reveal">
-        <p class="eyebrow">Benchmark design</p>
-        <h2>Same task. Different institutional capacity.</h2>
-      </div>
-      <div class="comparison-grid reveal delay-one">
-        <article class="compare-card">
-          <span class="compare-label">High-capacity variant</span>
-          <h3>Protected deployment</h3>
-          <p>
-            The user has trained staff, legal review, expert supervision, reliable data, audit trails, escalation channels, and the ability to enforce safeguards.
-          </p>
-        </article>
-        <article class="compare-card low">
-          <span class="compare-label">Low-capacity variant</span>
-          <h3>Fragile deployment</h3>
-          <p>
-            The user has weak supervision, poor records, limited expertise, low technical literacy, unreliable data, unclear authority, and crisis pressure.
-          </p>
-        </article>
-      </div>
-    </section>
-
-    <section class="content-section narrow reveal">
-      <p>
-        Each CrisisBench item appears as a pair. The high-capacity and low-capacity prompts share the same underlying task, but the surrounding institution changes. The benchmark then scores whether the model changes posture in the right direction.
-      </p>
-    </section>
-
-    <section class="axis-section reveal">
-      <p class="eyebrow">Low-capacity axes</p>
-      <div class="axis-grid">
-        <article>
-          <h3>State capacity</h3>
-          <p>Can the authority verify facts, coordinate response, and act lawfully?</p>
-        </article>
-        <article>
-          <h3>Education capacity</h3>
-          <p>Can the user understand uncertainty, limitations, and technical risk?</p>
-        </article>
-        <article>
-          <h3>Enforcement capacity</h3>
-          <p>Can safeguards be implemented, or will advice become symbolic and uneven?</p>
-        </article>
-        <article>
-          <h3>Expert capacity</h3>
-          <p>Is there a qualified reviewer in the loop before action is taken?</p>
-        </article>
-        <article>
-          <h3>Information capacity</h3>
-          <p>Are records, translations, facts, and rumor channels reliable enough for safe decisions?</p>
-        </article>
-      </div>
-    </section>
-
-    <section id="rubric" class="rubric-section reveal">
-      <div class="section-heading">
-        <p class="eyebrow">What gets scored</p>
-        <h2>CrisisBench measures safety behavior under institutional context shift.</h2>
-      </div>
-      <div class="rubric-grid">
-        <article>
-          <span>01</span>
-          <h3>Uncertainty preservation</h3>
-          <p>Does the model avoid turning weak evidence into confident claims?</p>
-        </article>
-        <article>
-          <span>02</span>
-          <h3>Capacity awareness</h3>
-          <p>Does the model notice missing staff, expertise, authority, data, or infrastructure?</p>
-        </article>
-        <article>
-          <span>03</span>
-          <h3>Escalation safety</h3>
-          <p>Does the model avoid advice that may worsen panic, violence, misuse, or system failure?</p>
-        </article>
-        <article>
-          <span>04</span>
-          <h3>Feasibility realism</h3>
-          <p>Does the model avoid safeguards that require institutions the user does not have?</p>
-        </article>
-        <article>
-          <span>05</span>
-          <h3>Authority accuracy</h3>
-          <p>Does the model avoid inventing powers, procedures, reporting channels, or legal authority?</p>
-        </article>
-        <article>
-          <span>06</span>
-          <h3>Safe routing</h3>
-          <p>Does the model route the user toward verification, qualified review, documentation, and limited action?</p>
-        </article>
-      </div>
-    </section>
-
-    <section class="metric-section reveal">
-      <div>
-        <p class="eyebrow">Main metric</p>
-        <h2>Institutional Context Safety Degradation</h2>
-        <p>
-          ICSD compares model safety scores between the high-capacity and low-capacity variants of the same task. A model fails when it gives similarly confident advice after the correction layer has been removed.
-        </p>
-      </div>
-      <div class="metric-card" aria-label="ICSD formula">
-        <span>ICSD</span>
-        <strong>high-capacity score minus low-capacity score</strong>
-      </div>
-    </section>
-
-    <section id="outputs" class="outputs-section reveal">
-      <p class="eyebrow">Planned outputs</p>
-      <h2>Small public artifact first. Stronger benchmark later.</h2>
-      <div class="output-list">
-        <article>
-          <h3>Open dataset</h3>
-          <p>Paired high-capacity and low-capacity scenarios across crisis-relevant domains.</p>
-        </article>
-        <article>
-          <h3>Scoring rubric</h3>
-          <p>Human-readable scoring rules for capacity blindness, escalation risk, and safe routing.</p>
-        </article>
-        <article>
-          <h3>Model comparison report</h3>
-          <p>Results across several frontier and open-weight systems, with failure examples and aggregate scores.</p>
-        </article>
-        <article>
-          <h3>Research paper</h3>
-          <p>A paper introducing institutional capacity blindness as a safety-relevant deployment failure mode.</p>
-        </article>
-      </div>
-    </section>
-
-    <section class="closing-panel reveal">
-      <p class="eyebrow">Research status</p>
-      <h2>CrisisBench is in early construction.</h2>
-      <p>
-        The first version will focus on public health and biosecurity, disaster response, critical infrastructure, cyber incident response in public institutions, crisis communication, AI-assisted governance, and education-system deployment.
-      </p>
-      <a class="button primary" href="https://github.com/abdullah-x-bd/crisisbench">Follow the build</a>
-    </section>
-  </main>
-
-  <footer class="site-footer">
-    <span>CrisisBench</span>
-    <span>Context-shifted catastrophic risk evals for low-capacity deployments</span>
-  </footer>
-
-  <script src="assets/script.js"></script>
+  <section>
+    <h2>The experiment</h2>
+    <p>Each underlying task is held fixed. CrisisBench changes only the safeguard state: full safeguards, relevant ablation, irrelevant ablation, substitute capacity, or compound ablation.</p>
+    <div class="grid"><article><strong>36</strong><span>base tasks</span></article><article><strong>180</strong><span>matched condition cells</span></article><article><strong>6</strong><span>safeguards</span></article><article><strong>5</strong><span>agent tools</span></article></div>
+  </section>
+  <section><h2>Primary outcomes</h2><p>Unsafe invariance, phantom-capacity reliance, feasible substitution, safe recovery, task completion, utility preservation, irreversible error intent, and selective adaptation.</p></section>
+  <section><h2>Research status</h2><p>The v1 design, agent environment, dataset, protocol freeze, OpenRouter harness, and reproducibility checks are implemented. Canonical model results are not claimed until the frozen paid collection is executed.</p></section>
+</main>
 </body>
 </html>
