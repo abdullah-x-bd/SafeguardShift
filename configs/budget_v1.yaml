@@ -1,8 +1,13 @@
 maximum_total_usd: 5.20
+observed_precanonical_spend_usd: 0.06122579
+canonical_shard_hard_cap_sum_usd: 4.17
+maximum_if_all_shard_caps_exhausted_usd: 4.23122579
+remaining_absolute_margin_usd: 0.96877421
 warning_fraction: 0.70
 hard_abort_fraction: 1.00
 estimated_max_output_tokens_per_turn: 350
-estimated_max_input_tokens_per_turn: 1800
 canonical_max_agent_turns: 6
-conservative_projected_full_matrix_usd: 4.81
-notes: Canonical collection aborts before a request if cumulative provider-reported cost plus conservative projected request cost would exceed $5.20. The 6-turn canonical horizon and 350-token per-turn cap preserve the full 780-cell model panel while targeting a conservative list-price envelope below the hard ceiling.
+frontier_cost_calibration:
+  openai_gpt_5_4_one_trajectory_usd: 0.0169925
+  anthropic_claude_sonnet_5_one_trajectory_usd: 0.035084
+notes: Canonical collection is split into fourteen independently capped shards whose hard caps sum to $4.17. Adding every observed pilot and preflight cost still leaves $0.96877421 below the user's absolute $5.20 ceiling even if every canonical shard exhausts its cap. Each canonical request reserves $0.02 before dispatch.
