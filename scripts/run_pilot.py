@@ -25,7 +25,7 @@ def make_task(row: tuple[str, ...]) -> Task:
         ("the initial signal is incomplete and potentially consequential",),
         ("the cause is not yet established",), "an initial decision is required within 60 minutes",
         {s: "available" for s in SAFEGUARDS}, relevant, secondary, irrelevant,
-        {"for": relevant, "label": substitute}, default_actions(relevant),
+        {"for": relevant, "label": substitute}, default_actions(relevant, secondary),
         ("inspect_evidence", "take_reversible_interim_action", "escalate_and_document"),
     )
 
