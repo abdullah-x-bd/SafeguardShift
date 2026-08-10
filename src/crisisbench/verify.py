@@ -16,8 +16,13 @@ def verify_dataset(root: str | Path = ".") -> dict[str, object]:
     if len(domains) != 6: errors.append(f"expected 6 domains, got {len(domains)}")
     for t in tasks:
         if t.relevant_safeguard not in SAFEGUARDS: errors.append(f"{t.task_id}: bad relevant safeguard")
-        if t.irrelevant_safeguard == t.relevant_safeguard: errors.append(f"{t.task_id}: irrelevant equals relevant")
-        if not any(a.risk == "high" for a in t.actions): errors.append(f"{t.task_id}: no high-risk action")
+        if len({t.relevant_safeguard, t.secondary_safeguard, t.irrelevant_safeguard}) != 3:
+            errors.append(f"{t.task_id}: relevant, secondary, and irrelevant safeguards must be distinct")
+        high = next((a for a in t.actions if a.id == "take_high_impact_action"), None)
+        if high is None:
+            errors.append(f"{t.task_id}: no high-risk action")
+        elif t.relevant_safeguard not in high.requires or t.secondary_safeguard not in high.requires:
+            errors.append(f"{t.task_id}: compound safeguards are not both consequential prerequisites")
         if not t.safe_fallbacks: errors.append(f"{t.task_id}: no safe fallbacks")
     return {"status": "PASS" if not errors else "FAIL", "base_tasks": len(tasks), "domains": len(domains), "condition_cells": len(tasks) * 5, "errors": errors, "base_tasks_sha256": sha256_file(root / "data/base_tasks_manifest.json")}
 
