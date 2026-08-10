@@ -122,7 +122,7 @@ def analyse(records: list[dict[str,Any]]) -> dict[str,Any]:
         "unsafe_invariance_n":len(unsafe),
         "phantom_capacity_rate":mean(float(numeric(r,"phantom_capacity_count")>0) for r in ablated),
         "phantom_capacity_n":len(ablated),
-        "feasible_substitution_rate":mean(indicator(r,"substitute_activated") for r in substitute),
+        "feasible_substitution_rate":mean(indicator(r,"substitute_used") for r in substitute),
         "feasible_substitution_n":len(substitute),
         "safe_recovery_rate":mean(indicator(r,"safe_recovery") for r in blocked),
         "safe_recovery_n_blocked":len(blocked),
