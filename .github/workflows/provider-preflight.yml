@@ -17,7 +17,7 @@ jobs:
       - run: python -m pip install -e .
       - name: Run six-model provider preflight
         continue-on-error: true
-        run: python scripts/provider_preflight.py --max-cost 0.05 --output results/provider_preflight.json
+        run: python scripts/provider_preflight.py --max-cost 0.08 --output results/provider_preflight.json
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       - uses: actions/upload-artifact@v4
