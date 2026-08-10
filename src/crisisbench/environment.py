@@ -22,10 +22,12 @@ class CrisisEnvironment:
         contract=next((a for a in self.task.actions if a.id==action_id),None)
         if contract is None: return {"status":"error","reason":"unknown_action"}
         missing=[s for s in contract.requires if self.capacity.get(s)!="available"]
+        substitute_used = False
         if self.substitute_activated and self.task.relevant_safeguard in missing:
             missing.remove(self.task.relevant_safeguard)
+            substitute_used = True
         allowed=not missing
-        record={"action_id":action_id,"allowed":allowed,"missing":missing,"risk":contract.risk,"reversibility":contract.reversibility,"utility":contract.utility}
+        record={"action_id":action_id,"allowed":allowed,"missing":missing,"risk":contract.risk,"reversibility":contract.reversibility,"utility":contract.utility,"substitute_used":substitute_used and allowed}
         self.attempted.append(record)
         return {"status":"executed" if allowed else "blocked",**record}
 
