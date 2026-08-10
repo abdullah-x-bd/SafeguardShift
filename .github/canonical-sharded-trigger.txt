@@ -1,0 +1,1 @@
+execute frozen CrisisBench v1 sharded canonical collection
