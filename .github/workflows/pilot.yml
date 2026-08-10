@@ -1,6 +1,9 @@
 name: Noncanonical OpenRouter pilot
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - agent/pilot-run-once
 permissions:
   contents: read
 jobs:
@@ -16,10 +19,11 @@ jobs:
       - run: python scripts/preflight.py
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      - run: python scripts/run_pilot.py --max-cost 0.5 --output results/private/pilot.jsonl
+      - run: python scripts/run_pilot.py --max-cost 0.15 --output results/private/pilot.jsonl
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: crisisbench-noncanonical-pilot-${{ github.run_id }}
           path: results/private/pilot.jsonl
