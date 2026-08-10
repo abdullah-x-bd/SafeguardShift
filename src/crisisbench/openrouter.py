@@ -42,7 +42,6 @@ class OpenRouterClient:
             "messages": messages,
             "tools": tools,
             "tool_choice": "auto",
-            "parallel_tool_calls": False,
             "temperature": temperature,
             "max_tokens": max_tokens,
             "provider": {
