@@ -1,7 +1,7 @@
 {
   "files": {
     "configs/budget_v1.yaml": "dc23ca6d7195115435d0b3cd818977d3820dabd4223adac9f01bf547a5dc8a8c",
-    "configs/model_panel_v1.yaml": "8e30330c5b4caaf8a478675fe17494991bef92e4ef669188565dd9de86b609ba",
+    "configs/model_panel_v1.yaml": "3eb01cceeb60927d4636a2ec295f8d34ee405c6b17d608673d9a191b942a39bf",
     "configs/protocol_v1.yaml": "6bfce6071afcf6fbec3f84d18ed8e597763d8cdd3c944d0be26a7339372ac0c9",
     "data/base_tasks_manifest.json": "316a45f5e1633ebbe86a96d788628fdfb867b4d3b70875601a1c957c06fdcd08",
     "data/capacity_conditions.json": "e61a047a85205cca6894b53b9580e73f67f2fa49c02c91bbc0262a756a043505",
