@@ -34,14 +34,22 @@ class OpenRouterClient:
             return float(value)
         return None
 
-    def chat(self, spec: ModelSpec, messages: list[dict[str, Any]], tools: list[dict[str, Any]], temperature: float = 0.0, max_tokens: int = 500) -> dict[str, Any]:
+    def chat(
+        self,
+        spec: ModelSpec,
+        messages: list[dict[str, Any]],
+        tools: list[dict[str, Any]],
+        temperature: float = 0.0,
+        max_tokens: int = 500,
+        tool_choice: Any = "auto",
+    ) -> dict[str, Any]:
         if self.cost_gate:
             self.cost_gate.allow(self.conservative_request_usd)
         body: dict[str, Any] = {
             "model": spec.id,
             "messages": messages,
             "tools": tools,
-            "tool_choice": "auto",
+            "tool_choice": tool_choice,
             "temperature": temperature,
             "max_tokens": max_tokens,
             "provider": {
