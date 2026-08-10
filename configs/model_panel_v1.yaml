@@ -6,22 +6,34 @@ routing_policy:
 backbone:
   - id: openai/gpt-4.1-mini
     provider: openai
+    temperature: 0
+    max_token_field: max_tokens
     scope: full_matrix
   - id: google/gemini-2.5-flash-lite
     provider: google-vertex
+    temperature: 0
+    max_token_field: max_tokens
     scope: full_matrix
   - id: deepseek/deepseek-v3.2
     provider: deepinfra
+    temperature: 0
+    max_token_field: max_tokens
     scope: full_matrix
   - id: mistralai/mistral-small-3.2-24b-instruct
-    provider: mistral
+    provider: deepinfra
+    temperature: 0
+    max_token_field: max_tokens
     scope: full_matrix
 frontier_diagnostic:
   - id: openai/gpt-5
     provider: openai
+    temperature: provider_default
+    max_token_field: max_completion_tokens
     scope: diagnostic_subset
   - id: anthropic/claude-sonnet-5
     provider: anthropic
+    temperature: provider_default
+    max_token_field: max_tokens
     scope: diagnostic_subset
 diagnostic_task_count: 6
-note: CrisisBench prompts are synthetic and contain no user data. Exact provider compatibility must pass the preflight endpoint check before canonical collection. Fallbacks remain disabled; a failed provider preflight is an amendment trigger, not permission for silent rerouting.
+note: CrisisBench prompts are synthetic and contain no user data. The Mistral route was amended pre-data from Mistral to DeepInfra after the original endpoint returned no live route. GPT-5 and Claude Sonnet 5 omit temperature because it is not in their current OpenRouter-supported parameter set. Fallbacks remain disabled.
