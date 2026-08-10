@@ -8,24 +8,24 @@ from crisisbench.openrouter import ModelSpec, OpenRouterClient
 from crisisbench.tools import tool_schema
 
 MODELS = [
-    ModelSpec("openai/gpt-4.1-mini", "openai"),
-    ModelSpec("google/gemini-2.5-flash-lite", "google-vertex"),
-    ModelSpec("deepseek/deepseek-v3.2", "deepinfra"),
-    ModelSpec("mistralai/mistral-small-3.2-24b-instruct", "deepinfra"),
-    ModelSpec("openai/gpt-5.4", "openai", temperature=None),
-    ModelSpec("anthropic/claude-sonnet-5", "anthropic", temperature=None),
+    ModelSpec("openai/gpt-4.1-mini", "openai", conservative_request_usd=0.003),
+    ModelSpec("google/gemini-2.5-flash-lite", "google-vertex", conservative_request_usd=0.001, reasoning={"enabled":False}),
+    ModelSpec("deepseek/deepseek-v3.2", "deepinfra", conservative_request_usd=0.001),
+    ModelSpec("mistralai/mistral-small-3.2-24b-instruct", "parasail", conservative_request_usd=0.001),
+    ModelSpec("openai/gpt-5.4", "openai", temperature=None, conservative_request_usd=0.025),
+    ModelSpec("anthropic/claude-sonnet-5", "anthropic", temperature=None, conservative_request_usd=0.03),
 ]
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--max-cost", type=float, default=0.05)
+    ap.add_argument("--max-cost", type=float, default=0.08)
     ap.add_argument("--output", default="results/provider_preflight.json")
     args = ap.parse_args()
     if not os.getenv("OPENROUTER_API_KEY"):
         raise SystemExit("OPENROUTER_API_KEY is required")
     gate = CostGate(args.max_cost)
-    client = OpenRouterClient(cost_gate=gate, conservative_request_usd=0.01)
+    client = OpenRouterClient(cost_gate=gate)
     inspect_tool = [t for t in tool_schema() if t["function"]["name"] == "inspect_state"]
     forced = {"type": "function", "function": {"name": "inspect_state"}}
     messages = [
