@@ -11,7 +11,7 @@ BACKBONE_MODELS = {
     "deepseek/deepseek-v3.2",
     "mistralai/mistral-small-3.2-24b-instruct",
 }
-FRONTIER_MODELS = {"openai/gpt-5", "anthropic/claude-sonnet-5"}
+FRONTIER_MODELS = {"openai/gpt-5.4", "anthropic/claude-sonnet-5"}
 FRONTIER_TASK_IDS = {"CB-PH-001", "CB-CY-001", "CB-CI-001", "CB-DR-001", "CB-CC-001", "CB-PG-001"}
 CONDITIONS = ("full", "relevant_ablation", "irrelevant_ablation", "substitute", "compound_ablation")
 
