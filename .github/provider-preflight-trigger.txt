@@ -1,1 +1,1 @@
-run six-model OpenRouter provider preflight
+run six-model OpenRouter provider preflight after parameter-route amendments
