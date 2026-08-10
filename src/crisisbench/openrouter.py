@@ -1,13 +1,16 @@
 from __future__ import annotations
 import json
 import os
+import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 from typing import Any
 from .ledger import CostGate, request_hash
 
 BASE_URL = "https://openrouter.ai/api/v1/chat/completions"
+GENERATION_URL = "https://openrouter.ai/api/v1/generation"
 
 @dataclass(frozen=True)
 class ModelSpec:
@@ -17,12 +20,13 @@ class ModelSpec:
     max_token_field: str = "max_tokens"
 
 class OpenRouterClient:
-    def __init__(self, api_key: str | None = None, cost_gate: CostGate | None = None, conservative_request_usd: float = 0.01) -> None:
+    def __init__(self, api_key: str | None = None, cost_gate: CostGate | None = None, conservative_request_usd: float = 0.01, max_retries: int = 3) -> None:
         self.api_key = api_key or os.getenv("OPENROUTER_API_KEY")
         if not self.api_key:
             raise RuntimeError("OPENROUTER_API_KEY is not set")
         self.cost_gate = cost_gate
         self.conservative_request_usd = conservative_request_usd
+        self.max_retries = max_retries
 
     @staticmethod
     def response_cost(response: dict[str, Any]) -> float | None:
@@ -34,6 +38,29 @@ class OpenRouterClient:
         value = response.get("cost")
         if isinstance(value, (int, float)):
             return float(value)
+        return None
+
+    def generation_cost(self, generation_id: str) -> float | None:
+        query = urllib.parse.urlencode({"id": generation_id})
+        req = urllib.request.Request(
+            f"{GENERATION_URL}?{query}",
+            headers={"Authorization": f"Bearer {self.api_key}"},
+            method="GET",
+        )
+        for delay in (0.15, 0.35, 0.75):
+            time.sleep(delay)
+            try:
+                with urllib.request.urlopen(req, timeout=30) as r:
+                    payload = json.loads(r.read())
+                data = payload.get("data") or {}
+                value = data.get("total_cost")
+                if isinstance(value, (int, float)):
+                    return float(value)
+            except urllib.error.HTTPError as exc:
+                if exc.code not in (404, 429, 500, 502, 503, 504):
+                    return None
+            except (TimeoutError, urllib.error.URLError, json.JSONDecodeError):
+                pass
         return None
 
     def chat(
@@ -62,31 +89,51 @@ class OpenRouterClient:
         if spec.temperature is not None:
             body["temperature"] = spec.temperature
         digest = request_hash(body)
-        req = urllib.request.Request(
-            BASE_URL,
-            data=json.dumps(body).encode(),
-            headers={
-                "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json",
-                "HTTP-Referer": "https://github.com/abdullah-x-bd/crisisbench",
-                "X-Title": "CrisisBench",
-            },
-            method="POST",
-        )
-        try:
-            with urllib.request.urlopen(req, timeout=120) as r:
-                response: dict[str, Any] = json.loads(r.read())
-        except urllib.error.HTTPError as e:
-            detail = e.read().decode(errors="replace")
-            raise RuntimeError(f"OpenRouter HTTP {e.code}: {detail}") from e
+        request_bytes = json.dumps(body).encode()
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://github.com/abdullah-x-bd/crisisbench",
+            "X-Title": "CrisisBench",
+        }
+        response: dict[str, Any] | None = None
+        last_error: str | None = None
+        for attempt in range(self.max_retries + 1):
+            req = urllib.request.Request(BASE_URL, data=request_bytes, headers=headers, method="POST")
+            try:
+                with urllib.request.urlopen(req, timeout=120) as r:
+                    response = json.loads(r.read())
+                break
+            except urllib.error.HTTPError as exc:
+                detail = exc.read().decode(errors="replace")
+                last_error = f"OpenRouter HTTP {exc.code}: {detail}"
+                if exc.code not in (429, 500, 502, 503, 504) or attempt >= self.max_retries:
+                    raise RuntimeError(last_error) from exc
+                time.sleep(1.0 * (2**attempt))
+            except (TimeoutError, urllib.error.URLError) as exc:
+                last_error = f"OpenRouter transport error: {exc}"
+                if attempt >= self.max_retries:
+                    raise RuntimeError(last_error) from exc
+                time.sleep(1.0 * (2**attempt))
+        if response is None:
+            raise RuntimeError(last_error or "OpenRouter request failed")
+        cost = self.response_cost(response)
+        cost_source = "response_usage"
+        if cost is None and isinstance(response.get("id"), str):
+            cost = self.generation_cost(response["id"])
+            cost_source = "generation_audit" if cost is not None else "conservative_fallback"
+        if cost is None:
+            cost = self.conservative_request_usd
+            cost_source = "conservative_fallback"
         if self.cost_gate:
-            cost = self.response_cost(response)
-            self.cost_gate.add(cost if cost is not None else self.conservative_request_usd)
+            self.cost_gate.add(cost)
         response["_crisisbench_request"] = {
             "sha256": digest,
             "requested_model": spec.id,
             "requested_provider": spec.provider,
             "temperature": spec.temperature,
             "max_token_field": spec.max_token_field,
+            "accounted_cost_usd": cost,
+            "cost_source": cost_source,
         }
         return response
