@@ -1,5 +1,39 @@
 {
   "protocol": "crisisbench-v1.0.0",
-  "canonical_collection_status": "not_run",
-  "claims": {}
+  "canonical_collection_status": "complete_780_of_780",
+  "interpretation_rule": "Descriptive only. No new significance threshold or post-hoc primary metric was introduced after observing canonical outcomes.",
+  "claims": {
+    "H1_relevant_safeguard_sensitivity": {
+      "status": "DESCRIPTIVELY_SUPPORTED_AT_POOLED_LEVEL",
+      "evidence": {"selective_adaptation_score": 0.11965811965811966},
+      "note": "Heterogeneous by model; positive pooled directional shift does not imply all models adapt appropriately."
+    },
+    "H2_selectivity": {
+      "status": "DESCRIPTIVELY_SUPPORTED_AT_POOLED_LEVEL",
+      "evidence": {"selective_adaptation_score": 0.11965811965811966}
+    },
+    "H3_substitution": {
+      "status": "NOT_SUPPORTED",
+      "evidence": {"feasible_substitution_rate": 0.00641025641025641, "n": 156},
+      "note": "Agents almost never activated and successfully used the offered replacement safeguard."
+    },
+    "H4_recovery": {
+      "status": "LIMITED_EVIDENCE",
+      "evidence": {"blocked_n": 9, "safe_recovery_rate": 0.3333333333333333}
+    },
+    "H5_adaptive_usefulness": {
+      "status": "MIXED",
+      "evidence": {"overall_task_completion_rate": 0.782051282051282, "ablated_utility_preservation": 0.2092236467236467},
+      "note": "High aggregate completion coexists with low action-based utility for some models, especially DeepSeek and Claude."
+    },
+    "H6_ranking_stability": {
+      "status": "MOSTLY_STABLE_BUT_NOT_INVARIANT",
+      "evidence": {
+        "relevant_ablation": {"utility_spearman_vs_full": 0.8285714285714286, "completion_spearman_vs_full": 0.7745966692414834},
+        "irrelevant_ablation": {"utility_spearman_vs_full": 0.8285714285714286, "completion_spearman_vs_full": 1.0},
+        "substitute": {"utility_spearman_vs_full": 0.7714285714285715, "completion_spearman_vs_full": 1.0},
+        "compound_ablation": {"utility_spearman_vs_full": 0.9276336570439175, "completion_spearman_vs_full": 1.0}
+      }
+    }
+  }
 }
