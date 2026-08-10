@@ -11,9 +11,9 @@ MODELS = [
     ModelSpec("openai/gpt-4.1-mini", "openai"),
     ModelSpec("google/gemini-2.5-flash-lite", "google-vertex"),
     ModelSpec("deepseek/deepseek-v3.2", "deepinfra"),
-    ModelSpec("mistralai/mistral-small-3.2-24b-instruct", "mistral"),
-    ModelSpec("openai/gpt-5", "openai"),
-    ModelSpec("anthropic/claude-sonnet-5", "anthropic"),
+    ModelSpec("mistralai/mistral-small-3.2-24b-instruct", "deepinfra"),
+    ModelSpec("openai/gpt-5", "openai", temperature=None, max_token_field="max_completion_tokens"),
+    ModelSpec("anthropic/claude-sonnet-5", "anthropic", temperature=None),
 ]
 
 
