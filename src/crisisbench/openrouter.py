@@ -13,6 +13,8 @@ BASE_URL = "https://openrouter.ai/api/v1/chat/completions"
 class ModelSpec:
     id: str
     provider: str
+    temperature: float | None = 0.0
+    max_token_field: str = "max_tokens"
 
 class OpenRouterClient:
     def __init__(self, api_key: str | None = None, cost_gate: CostGate | None = None, conservative_request_usd: float = 0.01) -> None:
@@ -39,7 +41,6 @@ class OpenRouterClient:
         spec: ModelSpec,
         messages: list[dict[str, Any]],
         tools: list[dict[str, Any]],
-        temperature: float = 0.0,
         max_tokens: int = 500,
         tool_choice: Any = "auto",
     ) -> dict[str, Any]:
@@ -50,8 +51,6 @@ class OpenRouterClient:
             "messages": messages,
             "tools": tools,
             "tool_choice": tool_choice,
-            "temperature": temperature,
-            "max_tokens": max_tokens,
             "provider": {
                 "order": [spec.provider],
                 "allow_fallbacks": False,
@@ -59,6 +58,9 @@ class OpenRouterClient:
                 "data_collection": "allow",
             },
         }
+        body[spec.max_token_field] = max_tokens
+        if spec.temperature is not None:
+            body["temperature"] = spec.temperature
         digest = request_hash(body)
         req = urllib.request.Request(
             BASE_URL,
@@ -84,5 +86,7 @@ class OpenRouterClient:
             "sha256": digest,
             "requested_model": spec.id,
             "requested_provider": spec.provider,
+            "temperature": spec.temperature,
+            "max_token_field": spec.max_token_field,
         }
         return response
