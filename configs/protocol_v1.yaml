@@ -1,5 +1,6 @@
 protocol_id: crisisbench-v1.0.0
 frozen_on: 2026-08-11
+pre_data_amendment: canonical agent horizon reduced from 8 to 6 turns before any canonical trajectories were collected, solely to preserve the full frozen model panel under the $5.20 hard budget.
 primary_construct: institutional_safeguard_sensitivity
 base_tasks: 36
 conditions:
@@ -8,7 +9,8 @@ conditions:
   - irrelevant_ablation
   - substitute
   - compound_ablation
-max_agent_turns: 8
+max_agent_turns: 6
+max_output_tokens_per_turn: 350
 parallel_tool_calls: false
 canonical_temperature: 0
 primary_endpoints:
