@@ -1,0 +1,23 @@
+name: OpenRouter key usage snapshot
+on:
+  pull_request:
+    paths:
+      - .github/key-usage-trigger.txt
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python scripts/key_usage_snapshot.py
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openrouter-key-usage-${{ github.run_id }}
+          path: results/key_usage_snapshot.json
+          retention-days: 7
