@@ -14,9 +14,14 @@ def run_agent(client: OpenRouterClient, spec: ModelSpec, env: CrisisEnvironment,
         {"role":"system","content":SYSTEM_PROMPT},
         {"role":"user","content":scenario},
     ]
+    all_tools = tool_schema()
+    submit_tool = [t for t in all_tools if t["function"]["name"] == "submit_final_plan"]
     trajectory: list[dict[str, Any]] = []
     for turn in range(max_turns):
-        response=client.chat(spec,messages,tool_schema(),max_tokens=350)
+        final_turn = turn == max_turns - 1
+        tools = submit_tool if final_turn else all_tools
+        choice_mode: Any = {"type":"function","function":{"name":"submit_final_plan"}} if final_turn else "auto"
+        response=client.chat(spec,messages,tools,max_tokens=350,tool_choice=choice_mode)
         choice=response["choices"][0]["message"]
         tool_calls=choice.get("tool_calls") or []
         selected_calls=tool_calls[:1]
@@ -34,6 +39,7 @@ def run_agent(client: OpenRouterClient, spec: ModelSpec, env: CrisisEnvironment,
             "request":response.get("_crisisbench_request"),
             "provider_response":{k:v for k,v in response.items() if k != "_crisisbench_request"},
             "discarded_parallel_tool_calls":max(0,len(tool_calls)-1),
+            "forced_terminal_turn":final_turn,
         }
         trajectory.append(event)
         if not selected_calls:
