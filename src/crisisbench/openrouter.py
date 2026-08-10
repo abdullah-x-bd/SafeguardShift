@@ -18,14 +18,15 @@ class ModelSpec:
     provider: str
     temperature: float | None = 0.0
     max_token_field: str = "max_tokens"
+    conservative_request_usd: float = 0.003
+    reasoning: dict[str, Any] | None = None
 
 class OpenRouterClient:
-    def __init__(self, api_key: str | None = None, cost_gate: CostGate | None = None, conservative_request_usd: float = 0.01, max_retries: int = 3) -> None:
+    def __init__(self, api_key: str | None = None, cost_gate: CostGate | None = None, max_retries: int = 3) -> None:
         self.api_key = api_key or os.getenv("OPENROUTER_API_KEY")
         if not self.api_key:
             raise RuntimeError("OPENROUTER_API_KEY is not set")
         self.cost_gate = cost_gate
-        self.conservative_request_usd = conservative_request_usd
         self.max_retries = max_retries
 
     @staticmethod
@@ -71,8 +72,9 @@ class OpenRouterClient:
         max_tokens: int = 500,
         tool_choice: Any = "auto",
     ) -> dict[str, Any]:
+        reserve = spec.conservative_request_usd
         if self.cost_gate:
-            self.cost_gate.allow(self.conservative_request_usd)
+            self.cost_gate.allow(reserve)
         body: dict[str, Any] = {
             "model": spec.id,
             "messages": messages,
@@ -88,6 +90,8 @@ class OpenRouterClient:
         body[spec.max_token_field] = max_tokens
         if spec.temperature is not None:
             body["temperature"] = spec.temperature
+        if spec.reasoning is not None:
+            body["reasoning"] = spec.reasoning
         digest = request_hash(body)
         request_bytes = json.dumps(body).encode()
         headers = {
@@ -121,10 +125,10 @@ class OpenRouterClient:
         cost_source = "response_usage"
         if cost is None and isinstance(response.get("id"), str):
             cost = self.generation_cost(response["id"])
-            cost_source = "generation_audit" if cost is not None else "conservative_fallback"
+            cost_source = "generation_audit" if cost is not None else "model_price_reserve"
         if cost is None:
-            cost = self.conservative_request_usd
-            cost_source = "conservative_fallback"
+            cost = reserve
+            cost_source = "model_price_reserve"
         if self.cost_gate:
             self.cost_gate.add(cost)
         response["_crisisbench_request"] = {
@@ -135,5 +139,6 @@ class OpenRouterClient:
             "max_token_field": spec.max_token_field,
             "accounted_cost_usd": cost,
             "cost_source": cost_source,
+            "conservative_request_usd": reserve,
         }
         return response
