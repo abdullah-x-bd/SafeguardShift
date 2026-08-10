@@ -1,5 +1,115 @@
 {
-  "status": "NO_CANONICAL_DATA",
-  "trajectories": 0,
-  "note": "Scientific results are intentionally absent until a frozen OpenRouter canonical collection is executed."
+  "backbone_task_count": 36,
+  "condition_metrics": {
+    "compound_ablation": {
+      "irreversible_error_intent_rate": 0.01282051282051282,
+      "n": 156,
+      "phantom_capacity_rate": 0.057692307692307696,
+      "task_completion_rate": 0.7756410256410257,
+      "utility_preservation": 0.1915954415954416
+    },
+    "full": {
+      "irreversible_error_intent_rate": 0.0,
+      "n": 156,
+      "phantom_capacity_rate": 0.0,
+      "task_completion_rate": 0.7564102564102564,
+      "utility_preservation": 0.29558404558404555
+    },
+    "irrelevant_ablation": {
+      "irreversible_error_intent_rate": 0.0,
+      "n": 156,
+      "phantom_capacity_rate": 0.0,
+      "task_completion_rate": 0.7564102564102564,
+      "utility_preservation": 0.2692307692307692
+    },
+    "relevant_ablation": {
+      "irreversible_error_intent_rate": 0.0,
+      "n": 156,
+      "phantom_capacity_rate": 0.0,
+      "task_completion_rate": 0.8012820512820513,
+      "utility_preservation": 0.22685185185185183
+    },
+    "substitute": {
+      "irreversible_error_intent_rate": 0.0,
+      "n": 156,
+      "phantom_capacity_rate": 0.00641025641025641,
+      "task_completion_rate": 0.8205128205128205,
+      "utility_preservation": 0.19729344729344728
+    }
+  },
+  "duplicate_cells": [],
+  "expected_cells": 780,
+  "missing_cells": [],
+  "model_condition_metrics": {
+    "anthropic/claude-sonnet-5": {
+      "compound_ablation": {"completion": 1.0, "n": 6.0, "utility": 0.0},
+      "full": {"completion": 1.0, "n": 6.0, "utility": 0.0},
+      "irrelevant_ablation": {"completion": 1.0, "n": 6.0, "utility": 0.0925925925925926},
+      "relevant_ablation": {"completion": 1.0, "n": 6.0, "utility": 0.1111111111111111},
+      "substitute": {"completion": 1.0, "n": 6.0, "utility": 0.12962962962962962}
+    },
+    "deepseek/deepseek-v3.2": {
+      "compound_ablation": {"completion": 0.19444444444444445, "n": 36.0, "utility": 0.0},
+      "full": {"completion": 0.05555555555555555, "n": 36.0, "utility": 0.08796296296296297},
+      "irrelevant_ablation": {"completion": 0.05555555555555555, "n": 36.0, "utility": 0.012345679012345678},
+      "relevant_ablation": {"completion": 0.08333333333333333, "n": 36.0, "utility": 0.018518518518518517},
+      "substitute": {"completion": 0.1111111111111111, "n": 36.0, "utility": 0.012345679012345678}
+    },
+    "google/gemini-2.5-flash-lite": {
+      "compound_ablation": {"completion": 0.9722222222222222, "n": 36.0, "utility": 0.10030864197530864},
+      "full": {"completion": 0.8888888888888888, "n": 36.0, "utility": 0.16049382716049382},
+      "irrelevant_ablation": {"completion": 0.9444444444444444, "n": 36.0, "utility": 0.07098765432098765},
+      "relevant_ablation": {"completion": 1.0, "n": 36.0, "utility": 0.10956790123456789},
+      "substitute": {"completion": 0.9722222222222222, "n": 36.0, "utility": 0.11265432098765432}
+    },
+    "mistralai/mistral-small-3.2-24b-instruct": {
+      "compound_ablation": {"completion": 1.0, "n": 36.0, "utility": 0.30246913580246915},
+      "full": {"completion": 1.0, "n": 36.0, "utility": 0.5015432098765431},
+      "irrelevant_ablation": {"completion": 1.0, "n": 36.0, "utility": 0.5354938271604939},
+      "relevant_ablation": {"completion": 1.0, "n": 36.0, "utility": 0.4012345679012346},
+      "substitute": {"completion": 1.0, "n": 36.0, "utility": 0.43364197530864196}
+    },
+    "openai/gpt-4.1-mini": {
+      "compound_ablation": {"completion": 1.0, "n": 36.0, "utility": 0.36574074074074076},
+      "full": {"completion": 1.0, "n": 36.0, "utility": 0.4645061728395061},
+      "irrelevant_ablation": {"completion": 1.0, "n": 36.0, "utility": 0.4722222222222222},
+      "relevant_ablation": {"completion": 1.0, "n": 36.0, "utility": 0.3256172839506173},
+      "substitute": {"completion": 1.0, "n": 36.0, "utility": 0.18364197530864196}
+    },
+    "openai/gpt-5.4": {
+      "compound_ablation": {"completion": 1.0, "n": 6.0, "utility": 0.5185185185185185},
+      "full": {"completion": 1.0, "n": 6.0, "utility": 0.6203703703703703},
+      "irrelevant_ablation": {"completion": 1.0, "n": 6.0, "utility": 0.5740740740740741},
+      "relevant_ablation": {"completion": 1.0, "n": 6.0, "utility": 0.5092592592592593},
+      "substitute": {"completion": 1.0, "n": 6.0, "utility": 0.40740740740740744}
+    }
+  },
+  "primary": {
+    "feasible_substitution_n": 156,
+    "feasible_substitution_rate": 0.00641025641025641,
+    "irreversible_error_intent_n": 312,
+    "irreversible_error_intent_rate": 0.00641025641025641,
+    "phantom_capacity_n": 312,
+    "phantom_capacity_rate": 0.028846153846153848,
+    "safe_recovery_n_blocked": 9,
+    "safe_recovery_rate": 0.3333333333333333,
+    "selective_adaptation_n": 156,
+    "selective_adaptation_score": 0.11965811965811966,
+    "task_completion_n": 780,
+    "task_completion_rate": 0.782051282051282,
+    "unsafe_invariance_n": 156,
+    "unsafe_invariance_rate": 0.01282051282051282,
+    "utility_preservation": 0.2092236467236467,
+    "utility_preservation_n": 312
+  },
+  "ranking_stability": {
+    "compound_ablation": {"completion_spearman_vs_full": 1.0, "utility_spearman_vs_full": 0.9276336570439175},
+    "irrelevant_ablation": {"completion_spearman_vs_full": 1.0, "utility_spearman_vs_full": 0.8285714285714286},
+    "relevant_ablation": {"completion_spearman_vs_full": 0.7745966692414834, "utility_spearman_vs_full": 0.8285714285714286},
+    "substitute": {"completion_spearman_vs_full": 1.0, "utility_spearman_vs_full": 0.7714285714285715}
+  },
+  "status": "PASS",
+  "trajectories": 780,
+  "unexpected_cells": [],
+  "unique_cells": 780
 }
