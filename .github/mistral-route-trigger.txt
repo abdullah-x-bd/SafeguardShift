@@ -1,1 +1,1 @@
-test Mistral first-party provider with cleaned tool request
+test Mistral Venice provider with cleaned tool request
