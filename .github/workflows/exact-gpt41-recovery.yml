@@ -1,0 +1,30 @@
+name: Exact GPT-4.1 recovery
+on:
+  pull_request:
+    paths:
+      - .github/exact-gpt41-trigger.txt
+permissions:
+  contents: read
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e .
+      - name: Recover one missing canonical cell
+        run: >-
+          python scripts/run_cells.py
+          --model-key gpt41
+          --cells 'CB-PG-006:compound_ablation'
+          --max-cost 0.02
+          --output results/private/exact/gpt41.jsonl
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: exact-gpt41-recovery-${{ github.run_id }}
+          path: results/private/exact/
+          retention-days: 30
