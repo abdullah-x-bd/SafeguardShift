@@ -30,7 +30,8 @@ FREEZE_FILES = [
 
 
 def digest(p: Path) -> str:
-    return hashlib.sha256(p.read_bytes()).hexdigest()
+    data = p.read_bytes().replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+    return hashlib.sha256(data).hexdigest()
 
 
 def build(root: Path = Path(".")) -> dict:
