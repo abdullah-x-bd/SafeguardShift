@@ -48,15 +48,24 @@ def residual_cells(domain: str):
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--domain", required=True, choices=sorted(ACCEPTED_PREFIX))
+    ap.add_argument("--offset", type=int, default=0)
+    ap.add_argument("--limit", type=int)
     ap.add_argument("--max-cost", type=float, required=True)
     ap.add_argument("--output", required=True)
     args = ap.parse_args()
+
+    all_cells = residual_cells(args.domain)
+    if args.offset < 0 or args.offset > len(all_cells):
+        raise SystemExit("invalid offset")
+    end = len(all_cells) if args.limit is None else min(len(all_cells), args.offset + args.limit)
+    cells = all_cells[args.offset:end]
+    if not cells:
+        raise SystemExit("empty residual chunk")
 
     model = json.loads(Path("v2/configs/model_panel_v2.json").read_text(encoding="utf-8"))["backbone"][3]
     spec = ModelSpec(model["id"], model["provider"], model["max_token_field"], model["temperature"], 0.0001)
     gate = CostGate(args.max_cost)
     client = Client(gate=gate, retries=4)
-    cells = residual_cells(args.domain)
     out = Path(args.output)
     out.parent.mkdir(parents=True, exist_ok=True)
     completed = 0
@@ -65,11 +74,12 @@ def main() -> None:
             rec = run(client, spec, Environment(task, condition), rep)
             rec["score"] = score(task, rec)
             rec["exact_recovery"] = True
-            rec["recovery_policy"] = "amendment 005; exact domain suffix after fixed original and first-pass recovery prefixes"
+            rec["recovery_policy"] = "amendment 005; exact chunk of domain suffix after fixed original and first-pass recovery prefixes"
+            rec["recovery_chunk"] = {"domain": args.domain, "offset": args.offset, "limit": len(cells)}
             fh.write(json.dumps(rec, sort_keys=True) + "\n")
             fh.flush()
             completed += 1
-    print(json.dumps({"status": "PASS", "domain": args.domain, "requested": len(cells), "completed": completed, "cost_usd": gate.spent_usd}, sort_keys=True))
+    print(json.dumps({"status": "PASS", "domain": args.domain, "offset": args.offset, "requested": len(cells), "completed": completed, "cost_usd": gate.spent_usd}, sort_keys=True))
 
 
 if __name__ == "__main__":
