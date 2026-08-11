@@ -1,0 +1,30 @@
+name: Cancel obsolete SafeguardShift V2 finalizers
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/cancel-obsolete-v2.yml'
+permissions:
+  actions: write
+  contents: read
+jobs:
+  cancel:
+    if: github.head_ref == 'run/v2-primary-3model-finalize'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Cancel obsolete and duplicate paid finalizers
+        shell: bash
+        run: |
+          set -euo pipefail
+          repo='abdullah-x-bd/crisisbench'
+          keep_residual='31470556929'
+          for id in $(gh run list -R "$repo" --workflow 'SafeguardShift V2 parallel exact primary finalization' --limit 20 --json databaseId,status --jq '.[] | select(.status != "completed") | .databaseId'); do
+            gh run cancel "$id" -R "$repo" || true
+          done
+          for id in $(gh run list -R "$repo" --workflow 'SafeguardShift V2 exact residual primary finalization' --limit 20 --json databaseId,status --jq '.[] | select(.status != "completed") | .databaseId'); do
+            if [ "$id" != "$keep_residual" ]; then
+              gh run cancel "$id" -R "$repo" || true
+            fi
+          done
+          echo "Kept residual run $keep_residual; cancelled other active paid finalizers."
