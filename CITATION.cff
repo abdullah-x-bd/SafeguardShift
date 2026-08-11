@@ -1,19 +1,20 @@
 cff-version: 1.2.0
-message: "If you use CrisisBench, please cite this research software release."
-title: "CrisisBench: Institutional Safeguard Ablation for Agentic AI Safety Evaluation"
+message: "If you use SafeguardShift, please cite this research software release."
+title: "SafeguardShift: Institutional Safeguard Ablation for Agentic AI Safety Evaluation"
 type: software
 authors:
   - family-names: "X"
     given-names: "Abdullah"
     affiliation: "Project AWARE"
-version: 1.0.0
+version: 2.0.0
 date-released: 2026-08-11
-repository-code: "https://github.com/abdullah-x-bd/crisisbench"
+repository-code: "https://github.com/abdullah-x-bd/SafeguardShift"
 license: Apache-2.0
 keywords:
   - AI safety
   - agentic systems
   - evaluation
   - institutional safeguards
+  - safeguard ablation
   - benchmark validity
   - OpenRouter
