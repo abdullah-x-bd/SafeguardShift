@@ -21,7 +21,7 @@ RETRY_HTTP = {408, 409, 429, 500, 502, 503, 504, 529}
 
 
 class RoutedRecoveryClient:
-    def __init__(self, gate: CostGate, retries: int = 6):
+    def __init__(self, gate: CostGate, retries: int = 10):
         self.key = os.getenv("OPENROUTER_API_KEY")
         if not self.key:
             raise RuntimeError("OPENROUTER_API_KEY is not set")
@@ -128,7 +128,7 @@ class RoutedRecoveryClient:
             if attempt == self.retries:
                 raise last or RuntimeError("routed recovery request failed")
             self.transport_retry_count += 1
-            time.sleep(min(2**attempt, 8))
+            time.sleep(min(2**attempt, 4))
 
         raise last or RuntimeError("routed recovery request failed")
 
@@ -139,6 +139,7 @@ def main() -> None:
     ap.add_argument("--task-prefix", required=True)
     ap.add_argument("--max-cost", type=float, required=True)
     ap.add_argument("--output", required=True)
+    ap.add_argument("--failure-output")
     args = ap.parse_args()
 
     panel = json.loads(Path("v2/configs/model_panel_v2.json").read_text(encoding="utf-8"))["backbone"]
@@ -152,20 +153,43 @@ def main() -> None:
     ]
 
     gate = CostGate(args.max_cost)
-    client = RoutedRecoveryClient(gate=gate, retries=6)
+    client = RoutedRecoveryClient(gate=gate, retries=10)
     out = Path(args.output)
     out.parent.mkdir(parents=True, exist_ok=True)
+    failure_path = Path(args.failure_output) if args.failure_output else out.with_suffix(out.suffix + ".failures.jsonl")
+    failure_path.parent.mkdir(parents=True, exist_ok=True)
     completed = 0
+    failures = 0
 
-    with out.open("w", encoding="utf-8") as fh:
+    with out.open("w", encoding="utf-8") as fh, failure_path.open("w", encoding="utf-8") as fail_fh:
         for cell in requested:
             task = tasks[str(cell["task_id"])]
             before_retries = client.transport_retry_count
+            before_cost = gate.spent_usd
             client.reset_trajectory_events()
-            rec = run(client, spec, Environment(task, str(cell["condition"])), int(cell["replicate"]))
+            try:
+                rec = run(client, spec, Environment(task, str(cell["condition"])), int(cell["replicate"]))
+            except Exception as exc:
+                failure = {
+                    "cell": cell,
+                    "error_type": type(exc).__name__,
+                    "error": str(exc)[:1600],
+                    "routing_events": client.routing_events,
+                    "transport_retries": client.transport_retry_count - before_retries,
+                    "cost_usd": gate.spent_usd - before_cost,
+                    "policy": "transport failure only; no behavioral row accepted",
+                }
+                fail_fh.write(json.dumps(failure, sort_keys=True) + "\n")
+                fail_fh.flush()
+                failures += 1
+                text = str(exc)
+                if "cost gate" in text or "OpenRouter HTTP 401" in text or "OpenRouter HTTP 402" in text:
+                    raise
+                continue
+
             rec["score"] = score(task, rec)
             rec["exact_recovery"] = True
-            rec["recovery_policy"] = "fills only absent keys from fixed 2,972-cell primary baseline under amendment 008"
+            rec["recovery_policy"] = "fills only absent keys from fixed 3,159-cell primary baseline under amendment 009"
             rec["original_planned_provider"] = model["provider"]
             rec["recovery_routing_policy"] = {"require_parameters": True, "allow_fallbacks": True, "ignore": ["venice", "mistral"]}
             rec["recovery_transport_retries"] = client.transport_retry_count - before_retries
@@ -175,13 +199,15 @@ def main() -> None:
             completed += 1
 
     print(json.dumps({
-        "status": "PASS",
+        "status": "PASS" if failures == 0 else "PARTIAL",
         "model": spec.id,
         "task_prefix": args.task_prefix,
         "requested": len(requested),
         "completed": completed,
+        "failures": failures,
         "transport_retries": client.transport_retry_count,
         "cost_usd": gate.spent_usd,
+        "failure_output": str(failure_path),
     }, sort_keys=True))
 
 
