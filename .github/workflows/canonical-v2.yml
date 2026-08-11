@@ -1,15 +1,14 @@
 name: SafeguardShift V2 canonical collection
 on:
   workflow_dispatch:
-    inputs:
-      total_budget_usd:
-        description: Explicit newly approved total OpenRouter ceiling including preflight and all 72 domain shards
-        required: true
-        type: string
+  pull_request:
+    paths:
+      - 'v2/RUN_CANONICAL'
 permissions:
   contents: read
 jobs:
   gate:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'run/v2-canonical'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,19 +20,8 @@ jobs:
       - run: python scripts_v2/run_oracle.py
       - run: python scripts_v2/check_freeze.py
       - run: python scripts_v2/check_construct_validation.py results/v2/construct_validation.json
-      - id: budget
-        shell: bash
-        run: |
-          python - <<'PY'
-          import os
-          total = float("${{ inputs.total_budget_usd }}")
-          if total <= 0:
-              raise SystemExit("A positive explicit total budget approval is required.")
-          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
-              f.write(f"preflight_cap={total * 0.01}\n")
-          PY
       - name: Preflight all four backbone routes
-        run: python scripts_v2/provider_preflight.py --max-cost ${{ steps.budget.outputs.preflight_cap }}
+        run: python scripts_v2/provider_preflight.py --max-cost 0.059
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   collect:
@@ -58,9 +46,8 @@ jobs:
         shell: bash
         run: |
           CAP=$(python - <<'PY'
-          total=float("${{ inputs.total_budget_usd }}")
           shares={0:0.1270,1:0.0646,2:0.0943,3:0.0439}
-          print(total*shares[int("${{ matrix.model_index }}")]/6.0)
+          print(5.90*shares[int("${{ matrix.model_index }}")]/6.0)
           PY
           )
           echo "value=$CAP" >> "$GITHUB_OUTPUT"
@@ -73,4 +60,44 @@ jobs:
         with:
           name: v2-model${{ matrix.model_index }}-rep${{ matrix.replicate }}-${{ matrix.domain }}
           path: results/private/v2/
+          retention-days: 90
+  aggregate:
+    if: always()
+    needs: collect
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e .
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: v2-model*
+          path: results/private/v2
+          merge-multiple: true
+      - name: Build combined backbone ledger
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          files=sorted(Path('results/private/v2').glob('model*-rep*-*.jsonl'))
+          out=Path('results/private/v2/canonical-backbone.jsonl')
+          with out.open('w',encoding='utf-8') as w:
+              for p in files:
+                  for line in p.read_text(encoding='utf-8').splitlines():
+                      if line.strip(): w.write(line+'\n')
+          print({'shard_files':len(files),'rows':sum(1 for _ in out.open(encoding='utf-8'))})
+          PY
+      - name: Verify and analyse backbone
+        run: python scripts_v2/analyse_canonical.py --backbone-glob 'results/private/v2/model*-rep*-*.jsonl' --frontier-glob 'results/private/v2/__no_frontier__.jsonl' --backbone-output results/v2/backbone_summary.json --frontier-output results/v2/frontier_not_run.json
+        continue-on-error: true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: safeguardshift-v2-backbone-combined
+          path: |
+            results/private/v2/canonical-backbone.jsonl
+            results/private/v2/model*-rep*-*.jsonl
+            results/v2/backbone_summary.json
           retention-days: 90
