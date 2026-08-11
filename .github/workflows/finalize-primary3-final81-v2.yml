@@ -1,0 +1,222 @@
+name: SafeguardShift V2 final 81-cell primary completion
+on:
+  pull_request:
+    paths:
+      - 'v2/RUN_PRIMARY3_FINAL81'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  recover:
+    if: github.head_ref == 'run/v2-primary3-final81'
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        include:
+          - shard: mistral_ci
+            task_prefix: 'SS-CI-'
+            max_cost: '0.25'
+          - shard: mistral_dr
+            task_prefix: 'SS-DR-'
+            max_cost: '0.22'
+          - shard: mistral_cc
+            task_prefix: 'SS-CC-'
+            max_cost: '0.08'
+          - shard: mistral_pg
+            task_prefix: 'SS-PG-'
+            max_cost: '0.08'
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      GH_TOKEN: ${{ github.token }}
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e .
+      - run: python scripts_v2/check_freeze.py
+      - run: python scripts_v2/check_construct_validation.py results/v2/construct_validation.json
+      - name: Download fixed 3,159-cell baseline and exact 81-cell manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p prior
+          gh run download 31474146681 -n safeguardshift-v2-primary3-ROUTED-INCOMPLETE --dir prior
+          test -f prior/private/v2/canonical-primary3.jsonl
+          test -f prior/private/v2/primary3-missing-final.json
+          python - <<'PY'
+          import json
+          rows=json.load(open('prior/private/v2/primary3-missing-final.json'))
+          assert len(rows)==81, len(rows)
+          assert all(r['model']=='mistralai/mistral-small-3.2-24b-instruct' for r in rows)
+          print('FIXED BASELINE 3159 + RESIDUAL 81 PASS')
+          PY
+      - name: Recover exact missing cells and continue past transport failures
+        shell: bash
+        run: |
+          python scripts_v2/run_primary_missing_mistral_routed.py \
+            --cells prior/private/v2/primary3-missing-final.json \
+            --task-prefix '${{ matrix.task_prefix }}' \
+            --max-cost ${{ matrix.max_cost }} \
+            --output results/private/v2/final81-${{ matrix.shard }}.jsonl \
+            --failure-output results/private/v2/final81-${{ matrix.shard }}-failures.jsonl
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: primary3-final81-${{ matrix.shard }}
+          path: |
+            results/private/v2/final81-${{ matrix.shard }}.jsonl
+            results/private/v2/final81-${{ matrix.shard }}-failures.jsonl
+          if-no-files-found: warn
+          retention-days: 90
+
+  finalize:
+    if: always()
+    needs: recover
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e .
+      - run: safeguardshift verify
+      - run: python scripts_v2/run_oracle.py
+      - run: python scripts_v2/check_freeze.py
+      - run: python scripts_v2/check_construct_validation.py results/v2/construct_validation.json
+      - name: Download fixed 3,159-cell baseline and frontier
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p incoming/baseline incoming/frontier_source incoming/deepseek_original incoming/deepseek_old incoming/deepseek_robust results/private/v2
+          gh run download 31474146681 -n safeguardshift-v2-primary3-ROUTED-INCOMPLETE --dir incoming/baseline
+          test -f incoming/baseline/private/v2/canonical-primary3.jsonl
+          gh run download 31467929875 -n safeguardshift-v2-primary3-DONE --dir incoming/frontier_source
+          test -f incoming/frontier_source/results/private/v2/canonical-frontier.jsonl
+          cp incoming/frontier_source/results/private/v2/canonical-frontier.jsonl results/private/v2/canonical-frontier.jsonl
+          gh run download 31456685835 -p 'v2-model2-*' --dir incoming/deepseek_original || true
+          gh run download 31459468549 --dir incoming/deepseek_old || true
+          gh run download 31461817984 --dir incoming/deepseek_robust || true
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: primary3-final81-*
+          path: incoming/final81
+          merge-multiple: true
+      - name: Assemble and require exact 3,240-cell primary matrix
+        shell: bash
+        run: |
+          python scripts_v2/assemble_primary3.py \
+            --source accepted_3159_baseline=incoming/baseline \
+            --source final81_recovery=incoming/final81 \
+            --output results/private/v2/canonical-primary3.jsonl \
+            --missing-output results/private/v2/primary3-missing-final.json \
+            --report-output results/v2/primary3_canonical_verification.json
+          python - <<'PY'
+          import json
+          r=json.load(open('results/v2/primary3_canonical_verification.json'))
+          if r['accepted_cells'] != 3240 or r['missing_cells'] != 0:
+              raise SystemExit(f"primary matrix incomplete: {r}")
+          print('PRIMARY BACKBONE 3240/3240 PASS')
+          PY
+      - name: Preserve DeepSeek as provider/interface diagnostic
+        run: |
+          python scripts_v2/assemble_deepseek_diagnostic.py \
+            --source original=incoming/deepseek_original \
+            --source first_recovery=incoming/deepseek_old \
+            --source robust_recovery=incoming/deepseek_robust \
+            --output results/private/v2/deepseek-provider-diagnostic.jsonl \
+            --report-output results/v2/deepseek_provider_diagnostic.json
+      - name: Run frozen behavioral analysis
+        run: |
+          python scripts_v2/analyse_primary3.py \
+            --backbone-glob results/private/v2/canonical-primary3.jsonl \
+            --frontier-glob results/private/v2/canonical-frontier.jsonl \
+            --backbone-output results/v2/primary3_summary.json \
+            --frontier-output results/v2/frontier_summary.json
+      - name: Record final provenance and routing distribution
+        shell: bash
+        run: |
+          python - <<'PY'
+          import collections,hashlib,json
+          from pathlib import Path
+          routed=collections.Counter(); failures=[]
+          for p in Path('incoming/final81').rglob('final81-*.jsonl'):
+              if p.name.endswith('-failures.jsonl'):
+                  for line in p.read_text(encoding='utf-8').splitlines():
+                      if line.strip(): failures.append(json.loads(line))
+                  continue
+              for line in p.read_text(encoding='utf-8').splitlines():
+                  if not line.strip(): continue
+                  row=json.loads(line)
+                  for event in row.get('recovery_routing_events',[]):
+                      if event.get('status')!='accepted_response': continue
+                      md=event.get('openrouter_metadata') or {}
+                      selected=None
+                      for ep in ((md.get('endpoints') or {}).get('available') or []):
+                          if ep.get('selected'): selected=ep.get('provider'); break
+                      selected=selected or event.get('provider') or 'unknown'
+                      routed[str(selected)]+=1
+          names=[
+            'results/private/v2/canonical-primary3.jsonl','results/private/v2/canonical-frontier.jsonl',
+            'results/private/v2/deepseek-provider-diagnostic.jsonl','results/private/v2/primary3-missing-final.json',
+            'results/v2/primary3_canonical_verification.json','results/v2/primary3_summary.json',
+            'results/v2/frontier_summary.json','results/v2/deepseek_provider_diagnostic.json',
+            'v2/amendments/005_primary_estimand_provider_attrition.md','v2/amendments/006_residual_transport_retry.md',
+            'v2/amendments/007_mistral_transport_provider_substitution.md','v2/amendments/008_mistral_tool_aware_routing.md',
+            'v2/amendments/009_per_cell_transport_continuation.md',
+          ]
+          files={}
+          for name in names:
+              p=Path(name)
+              if p.exists(): files[name]={'sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'bytes':p.stat().st_size}
+          payload={
+            'protocol':'safeguardshift-v2.0.0','primary_estimand':'3 backbone models x 72 tasks x 5 conditions x 3 replicates = 3240 cells',
+            'primary_models':['openai/gpt-4.1-mini','google/gemini-2.5-flash-lite','mistralai/mistral-small-3.2-24b-instruct'],
+            'fixed_baseline_run':31474146681,'fixed_baseline_accepted_cells':3159,'final_residual_expected_cells':81,
+            'mistral_residual_routing':{'require_parameters':True,'allow_fallbacks':True,'ignore':['venice','mistral']},
+            'final81_caps_usd':{'mistral_ci':0.25,'mistral_dr':0.22,'mistral_cc':0.08,'mistral_pg':0.08,'total':0.63},
+            'successful_call_provider_counts':dict(routed),'unresolved_failure_records':len(failures),
+            'acceptance_policy':'3,159-cell baseline has strict priority; final81 rows fill absent keys only; no accepted row replaced',
+            'deepseek_role':'provider/interface reliability diagnostic only; not pooled into primary behavioral estimand',
+            'amendments':['005','006','007','008','009'],'files':files,
+          }
+          Path('results/v2/primary3_final_provenance.json').write_text(json.dumps(payload,indent=2,sort_keys=True)+'\n')
+          print(json.dumps({'provider_counts':dict(routed),'failure_records':len(failures)},sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: safeguardshift-v2-primary3-COMPLETE
+          path: |
+            results/private/v2/canonical-primary3.jsonl
+            results/private/v2/canonical-frontier.jsonl
+            results/private/v2/deepseek-provider-diagnostic.jsonl
+            results/private/v2/primary3-missing-final.json
+            results/v2/primary3_canonical_verification.json
+            results/v2/primary3_summary.json
+            results/v2/frontier_summary.json
+            results/v2/deepseek_provider_diagnostic.json
+            results/v2/primary3_final_provenance.json
+            v2/amendments/005_primary_estimand_provider_attrition.md
+            v2/amendments/006_residual_transport_retry.md
+            v2/amendments/007_mistral_transport_provider_substitution.md
+            v2/amendments/008_mistral_tool_aware_routing.md
+            v2/amendments/009_per_cell_transport_continuation.md
+          retention-days: 90
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: safeguardshift-v2-primary3-FINAL81-INCOMPLETE
+          path: |
+            results/private/v2/canonical-primary3.jsonl
+            results/private/v2/primary3-missing-final.json
+            results/v2/primary3_canonical_verification.json
+            incoming/final81/*failures.jsonl
+          if-no-files-found: warn
+          retention-days: 90
