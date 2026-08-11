@@ -2,7 +2,7 @@
   "canonical_collection": "NOT_RUN",
   "dataset_verification": "PASS",
   "design": "final_frozen_precanonical",
-  "construct_validation": "PASS_PENDING_FINAL_SUMMARY_FREEZE",
+  "construct_validation": "PASS",
   "external_expert_validation": "NOT_USED_NO_CERTIFICATION_CLAIMED",
   "note": "The complete post-cue-repair construct-validation evidence contains 144/144 valid real-task judgments: GPT-5.4 and Claude Sonnet 5 both approved all seven criteria for all 72 tasks. GPT-5.4 detected all 12 corruption controls and is the formal corruption sentinel; Claude detected 7/12 controls and remains a required unanimous real-task reviewer with control performance reported diagnostically. No V2 canonical model outcome has been generated or inspected. V1 remains immutable.",
   "oracle_verification": "PASS",
