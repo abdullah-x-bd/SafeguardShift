@@ -7,11 +7,10 @@ from pathlib import Path
 from safeguardshift.data import load_tasks
 from safeguardshift.ledger import CostGate
 from safeguardshift.openrouter import Client, ModelSpec
-from run_construct_validation import ALIASES, CRITERIA, corruption, prompt, task_payload, tool_schema
+from run_construct_validation import ALIASES, corruption, prompt, task_payload, tool_schema
 
 CANDIDATES = [
-    {"id":"anthropic/claude-sonnet-5","provider":"anthropic","max_token_field":"max_tokens","temperature":None,"reserve_usd":0.03,"max_tokens":400},
-    {"id":"google/gemini-2.5-flash","provider":"google-vertex","max_token_field":"max_tokens","temperature":0.0,"reserve_usd":0.005,"max_tokens":256},
+    {"id":"mistralai/mistral-medium-3.1","provider":"mistral","max_token_field":"max_tokens","temperature":0.0,"reserve_usd":0.005,"max_tokens":256},
 ]
 
 
@@ -28,7 +27,7 @@ def assess(client: Client, candidate: dict, payload: dict) -> dict:
 
 
 def main() -> None:
-    ap=argparse.ArgumentParser(); ap.add_argument("--max-cost",type=float,default=0.20); ap.add_argument("--output",default="results/private/v2/validator_qualification.json"); args=ap.parse_args()
+    ap=argparse.ArgumentParser(); ap.add_argument("--max-cost",type=float,default=0.10); ap.add_argument("--output",default="results/private/v2/validator_qualification.json"); args=ap.parse_args()
     panel=json.loads(Path("v2/configs/validation_panel_v2.json").read_text(encoding="utf-8")); task_map={t.task_id:t for t in load_tasks()}; controls=panel["corruption_controls"]["task_ids"]; modes=("irrelevant_collision","bad_substitute","bad_action_contract"); minimum=int(panel["corruption_controls"]["per_judge_minimum_detected"])
     gate=CostGate(args.max_cost); client=Client(gate=gate,retries=2); results={}
     for candidate in CANDIDATES:
