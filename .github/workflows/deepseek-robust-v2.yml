@@ -1,0 +1,60 @@
+name: SafeguardShift V2 robust DeepSeek recovery
+on:
+  pull_request:
+    paths:
+      - 'v2/RUN_DEEPSEEK_ROBUST'
+permissions:
+  contents: read
+  actions: write
+jobs:
+  cancel-superseded:
+    if: github.head_ref == 'run/v2-deepseek-robust'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Cancel superseded serial recovery and waiting finalizer
+        shell: bash
+        run: |
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/actions/runs/31459468549/cancel" || true
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/actions/runs/31461533780/cancel" || true
+  recover:
+    needs: cancel-superseded
+    if: github.head_ref == 'run/v2-deepseek-robust'
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        include:
+          - domain: public_health
+            cap: 0.21
+          - domain: critical_infrastructure
+            cap: 0.16
+          - domain: cyber_incident
+            cap: 0.24
+          - domain: disaster_response
+            cap: 0.24
+          - domain: public_governance
+            cap: 0.25
+          - domain: crisis_communication
+            cap: 0.25
+    runs-on: ubuntu-latest
+    environment: safeguardshift-v2-canonical
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e .
+      - run: python scripts_v2/check_freeze.py
+      - run: python scripts_v2/check_construct_validation.py results/v2/construct_validation.json
+      - name: Recover exact missing DeepSeek suffix on frozen DeepInfra route
+        run: python scripts_v2/run_deepseek_robust_recovery.py --domain ${{ matrix.domain }} --max-cost ${{ matrix.cap }} --output results/private/v2/deepseek-robust-${{ matrix.domain }}.jsonl
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: deepseek-robust-${{ matrix.domain }}
+          path: results/private/v2/deepseek-robust-${{ matrix.domain }}.jsonl
+          retention-days: 90
