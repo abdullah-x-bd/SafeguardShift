@@ -1,0 +1,34 @@
+name: SafeguardShift V2 OpenRouter usage snapshot
+on:
+  pull_request:
+    paths:
+      - 'v2/RUN_USAGE_SNAPSHOT'
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    if: github.head_ref == 'run/v2-usage-snapshot'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read OpenRouter key metadata
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          python - <<'PY'
+          import json, os, urllib.request
+          req=urllib.request.Request('https://openrouter.ai/api/v1/key',headers={'Authorization':'Bearer '+os.environ['OPENROUTER_API_KEY']})
+          with urllib.request.urlopen(req,timeout=60) as r:
+              payload=json.loads(r.read())
+          data=payload.get('data',payload)
+          allowed=('usage','usage_daily','usage_weekly','usage_monthly','limit','limit_remaining','is_free_tier','rate_limit')
+          safe={k:data.get(k) for k in allowed if k in data}
+          os.makedirs('results/private/v2',exist_ok=True)
+          open('results/private/v2/openrouter_usage_snapshot.json','w').write(json.dumps(safe,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(safe,sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: safeguardshift-v2-openrouter-usage
+          path: results/private/v2/openrouter_usage_snapshot.json
+          retention-days: 7
