@@ -1,0 +1,81 @@
+name: SafeguardShift V2 frontier diagnostic
+on:
+  workflow_dispatch:
+    inputs:
+      total_budget_usd:
+        description: Explicit newly approved total OpenRouter ceiling for frontier preflight plus both diagnostic model shards
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      gpt_cap: ${{ steps.budget.outputs.gpt_cap }}
+      claude_cap: ${{ steps.budget.outputs.claude_cap }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e .
+      - run: safeguardshift verify
+      - run: python scripts_v2/run_oracle.py
+      - run: python scripts_v2/check_freeze.py
+      - run: python scripts_v2/validate_expert_reviews.py v2/validation/expert_reviews.csv
+      - id: budget
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os
+          total = float("${{ inputs.total_budget_usd }}")
+          if total <= 0:
+              raise SystemExit("A positive explicit total budget approval is required.")
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"preflight_cap={total * 0.01}\n")
+              f.write(f"gpt_cap={total * 0.31}\n")
+              f.write(f"claude_cap={total * 0.68}\n")
+          PY
+      - name: Preflight both frontier routes
+        run: python scripts_v2/provider_preflight_frontier.py --max-cost ${{ steps.budget.outputs.preflight_cap }}
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+  gpt54:
+    needs: gate
+    runs-on: ubuntu-latest
+    environment: safeguardshift-v2-canonical
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e .
+      - run: python scripts_v2/run_frontier_diagnostic.py --model-index 0 --max-cost ${{ needs.gate.outputs.gpt_cap }} --output results/private/v2/frontier-gpt54.jsonl
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v2-frontier-gpt54
+          path: results/private/v2/
+          retention-days: 90
+  claude:
+    needs: gate
+    runs-on: ubuntu-latest
+    environment: safeguardshift-v2-canonical
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e .
+      - run: python scripts_v2/run_frontier_diagnostic.py --model-index 1 --max-cost ${{ needs.gate.outputs.claude_cap }} --output results/private/v2/frontier-claude.jsonl
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v2-frontier-claude
+          path: results/private/v2/
+          retention-days: 90

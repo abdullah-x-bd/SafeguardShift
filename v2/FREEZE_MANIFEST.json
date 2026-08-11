@@ -1,6 +1,7 @@
 {
   "files": {
     "v2/configs/analysis_v2.json": "a126050c7c70be69a0dd72ea4c7ae3419cf946abe5a88a55e05307e2205282b6",
+    "v2/configs/frontier_subset_v2.json": "ade324b572fa0efff57490999fa28391fcfd95e19dfebe0a3dacae7f0514c835",
     "v2/configs/model_panel_v2.json": "2a254cf0cb1bf58de83aa401faf6f196594622e13be71712023acb9c9f2d1763",
     "v2/configs/protocol_v2.json": "a6e2fd2a27f66693b44740727f3cfe1e8d88332e4ff865c20f7713b96c20eedf",
     "v2/data/base_tasks_manifest.json": "df18db399d9efd15629fd2106d1288d444b0b379e967abb659be3ebe5f8b4d28",
