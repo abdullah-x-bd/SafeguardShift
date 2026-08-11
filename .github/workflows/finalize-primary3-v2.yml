@@ -7,22 +7,72 @@ permissions:
   contents: read
   actions: write
 jobs:
-  finalize:
+  cancel:
     if: github.head_ref == 'run/v2-primary-3model-finalize'
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    steps:
+      - name: Cancel superseded recovery/finalization runs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set +e
+          for run_id in 31461817984 31461922867 31465610232 31465744497; do
+            gh api -X POST "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/cancel"
+          done
+          exit 0
+
+  mistral:
+    needs: cancel
+    if: github.head_ref == 'run/v2-primary-3model-finalize'
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        include:
+          - domain: public_health
+            cap: 0.06
+          - domain: critical_infrastructure
+            cap: 0.105
+          - domain: cyber_incident
+            cap: 0.045
+          - domain: disaster_response
+            cap: 0.085
+          - domain: public_governance
+            cap: 0.065
+          - domain: crisis_communication
+            cap: 0.09
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e .
+      - run: python scripts_v2/check_freeze.py
+      - run: python scripts_v2/check_construct_validation.py results/v2/construct_validation.json
+      - name: Recover exact Mistral domain residual
+        continue-on-error: true
+        run: python scripts_v2/run_mistral_domain_residual.py --domain '${{ matrix.domain }}' --max-cost '${{ matrix.cap }}' --output 'results/private/v2/mistral-residual-${{ matrix.domain }}.jsonl'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mistral-residual-${{ matrix.domain }}
+          path: results/private/v2/mistral-residual-${{ matrix.domain }}.jsonl
+          retention-days: 90
+
+  finalize:
+    needs: [cancel, mistral]
+    if: always() && needs.cancel.result == 'success' && github.head_ref == 'run/v2-primary-3model-finalize'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
     env:
       GH_TOKEN: ${{ github.token }}
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
     steps:
-      - name: Cancel superseded recovery/finalization runs
-        shell: bash
-        run: |
-          set +e
-          gh api -X POST "repos/${GITHUB_REPOSITORY}/actions/runs/31461817984/cancel"
-          gh api -X POST "repos/${GITHUB_REPOSITORY}/actions/runs/31461922867/cancel"
-          gh api -X POST "repos/${GITHUB_REPOSITORY}/actions/runs/31465610232/cancel"
-          exit 0
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
@@ -32,7 +82,13 @@ jobs:
       - run: python scripts_v2/run_oracle.py
       - run: python scripts_v2/check_freeze.py
       - run: python scripts_v2/check_construct_validation.py results/v2/construct_validation.json
-      - name: Download only stable-model source artifacts
+      - name: Download parallel Mistral residuals
+        uses: actions/download-artifact@v4
+        with:
+          pattern: mistral-residual-*
+          path: incoming/mistral_parallel
+          merge-multiple: true
+      - name: Download fixed source artifacts
         shell: bash
         run: |
           set -euo pipefail
@@ -50,12 +106,13 @@ jobs:
           test -n "$frontier"
           mkdir -p results/private/v2
           cp "$frontier" results/private/v2/canonical-frontier.jsonl
-      - name: Assemble amended primary before exact recovery
+      - name: Assemble amended primary after parallel Mistral recovery
         run: |
           python scripts_v2/assemble_primary3.py \
             --source original=incoming/original \
             --source gemini_recovery=incoming/gemini \
-            --source mistral_recovery=incoming/mistral \
+            --source mistral_first_recovery=incoming/mistral \
+            --source mistral_parallel_recovery=incoming/mistral_parallel \
             --output results/private/v2/primary3-pre-final.jsonl \
             --missing-output results/private/v2/primary3-missing-before-final.json \
             --report-output results/private/v2/primary3-assembly-before-final.json
@@ -65,9 +122,9 @@ jobs:
       - name: Recover exact Gemini residual cells
         continue-on-error: true
         run: python scripts_v2/run_primary_missing.py --cells results/private/v2/primary3-missing-before-final.json --model-index 1 --max-cost 0.01 --output results/private/v2/primary3-recovery-gemini.jsonl
-      - name: Recover exact Mistral residual cells
+      - name: Recover any tiny Mistral residual after domain jobs
         continue-on-error: true
-        run: python scripts_v2/run_primary_missing.py --cells results/private/v2/primary3-missing-before-final.json --model-index 3 --max-cost 0.40 --output results/private/v2/primary3-recovery-mistral.jsonl
+        run: python scripts_v2/run_primary_missing.py --cells results/private/v2/primary3-missing-before-final.json --model-index 3 --max-cost 0.02 --output results/private/v2/primary3-recovery-mistral-tail.jsonl
       - name: Assemble final 3,240-cell primary matrix
         shell: bash
         run: |
@@ -76,7 +133,8 @@ jobs:
           python scripts_v2/assemble_primary3.py \
             --source original=incoming/original \
             --source gemini_recovery=incoming/gemini \
-            --source mistral_recovery=incoming/mistral \
+            --source mistral_first_recovery=incoming/mistral \
+            --source mistral_parallel_recovery=incoming/mistral_parallel \
             --source final_exact_recovery=incoming/final \
             --output results/private/v2/canonical-primary3.jsonl \
             --missing-output results/private/v2/primary3-missing-after-final.json \
@@ -110,16 +168,7 @@ jobs:
           python - <<'PY'
           import hashlib,json
           from pathlib import Path
-          names=[
-            'results/private/v2/canonical-primary3.jsonl',
-            'results/private/v2/canonical-frontier.jsonl',
-            'results/private/v2/deepseek-provider-diagnostic.jsonl',
-            'results/v2/primary3_canonical_verification.json',
-            'results/v2/primary3_summary.json',
-            'results/v2/frontier_summary.json',
-            'results/v2/deepseek_provider_diagnostic.json',
-            'v2/amendments/005_primary_estimand_provider_attrition.md'
-          ]
+          names=['results/private/v2/canonical-primary3.jsonl','results/private/v2/canonical-frontier.jsonl','results/private/v2/deepseek-provider-diagnostic.jsonl','results/v2/primary3_canonical_verification.json','results/v2/primary3_summary.json','results/v2/frontier_summary.json','results/v2/deepseek_provider_diagnostic.json','v2/amendments/005_primary_estimand_provider_attrition.md']
           files={}
           for name in names:
               p=Path(name)
@@ -130,9 +179,11 @@ jobs:
             'primary_models':['openai/gpt-4.1-mini','google/gemini-2.5-flash-lite','mistralai/mistral-small-3.2-24b-instruct'],
             'deepseek_role':'provider/interface reliability diagnostic only; not pooled into primary behavioral estimand',
             'amendment':'v2/amendments/005_primary_estimand_provider_attrition.md',
-            'source_runs':{'original':31456685835,'gemini_recovery':31459468529,'mistral_recovery':31460302065,'deepseek_first_recovery':31459468549,'deepseek_robust_partial':31461817984,'frontier':31456858244},
+            'source_runs':{'original':31456685835,'gemini_recovery':31459468529,'mistral_first_recovery':31460302065,'deepseek_first_recovery':31459468549,'deepseek_robust_partial':31461817984,'frontier':31456858244},
+            'mistral_parallel_residual_cells':428,
+            'mistral_parallel_caps_usd':{'public_health':0.06,'critical_infrastructure':0.105,'cyber_incident':0.045,'disaster_response':0.085,'public_governance':0.065,'crisis_communication':0.09,'total':0.45},
+            'final_tail_caps_usd':{'gpt41':0.04,'gemini':0.01,'mistral':0.02,'total':0.07},
             'acceptance_policy':'first valid expected cell wins in fixed source-priority order; later duplicates excluded without inspecting outcomes',
-            'new_exact_recovery_caps_usd':{'gpt41':0.04,'gemini':0.01,'mistral':0.40,'total':0.45},
             'files':files
           }
           Path('results/v2/primary3_final_provenance.json').write_text(json.dumps(payload,indent=2,sort_keys=True)+'\n')
