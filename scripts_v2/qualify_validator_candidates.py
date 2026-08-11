@@ -10,7 +10,7 @@ from safeguardshift.openrouter import Client, ModelSpec
 from run_construct_validation import ALIASES, corruption, prompt, task_payload, tool_schema
 
 CANDIDATES = [
-    {"id":"mistralai/mistral-medium-3.1","provider":"mistral","max_token_field":"max_tokens","temperature":0.0,"reserve_usd":0.005,"max_tokens":256},
+    {"id":"x-ai/grok-4.20","provider":"xai","max_token_field":"max_tokens","temperature":0.0,"reserve_usd":0.01,"max_tokens":256},
 ]
 
 
@@ -27,7 +27,7 @@ def assess(client: Client, candidate: dict, payload: dict) -> dict:
 
 
 def main() -> None:
-    ap=argparse.ArgumentParser(); ap.add_argument("--max-cost",type=float,default=0.10); ap.add_argument("--output",default="results/private/v2/validator_qualification.json"); args=ap.parse_args()
+    ap=argparse.ArgumentParser(); ap.add_argument("--max-cost",type=float,default=0.15); ap.add_argument("--output",default="results/private/v2/validator_qualification.json"); args=ap.parse_args()
     panel=json.loads(Path("v2/configs/validation_panel_v2.json").read_text(encoding="utf-8")); task_map={t.task_id:t for t in load_tasks()}; controls=panel["corruption_controls"]["task_ids"]; modes=("irrelevant_collision","bad_substitute","bad_action_contract"); minimum=int(panel["corruption_controls"]["per_judge_minimum_detected"])
     gate=CostGate(args.max_cost); client=Client(gate=gate,retries=2); results={}
     for candidate in CANDIDATES:
