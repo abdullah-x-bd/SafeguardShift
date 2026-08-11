@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       total_budget_usd:
-        description: Explicit newly approved total OpenRouter ceiling including preflight and all 12 backbone shards
+        description: Explicit newly approved total OpenRouter ceiling including preflight and all 72 domain shards
         required: true
         type: string
 permissions:
@@ -40,20 +40,11 @@ jobs:
     needs: gate
     strategy:
       fail-fast: false
+      max-parallel: 8
       matrix:
-        include:
-          - {model_index: 0, replicate: 1, budget_share: 0.1270}
-          - {model_index: 0, replicate: 2, budget_share: 0.1270}
-          - {model_index: 0, replicate: 3, budget_share: 0.1270}
-          - {model_index: 1, replicate: 1, budget_share: 0.0646}
-          - {model_index: 1, replicate: 2, budget_share: 0.0646}
-          - {model_index: 1, replicate: 3, budget_share: 0.0646}
-          - {model_index: 2, replicate: 1, budget_share: 0.0943}
-          - {model_index: 2, replicate: 2, budget_share: 0.0943}
-          - {model_index: 2, replicate: 3, budget_share: 0.0943}
-          - {model_index: 3, replicate: 1, budget_share: 0.0439}
-          - {model_index: 3, replicate: 2, budget_share: 0.0439}
-          - {model_index: 3, replicate: 3, budget_share: 0.0439}
+        model_index: [0, 1, 2, 3]
+        replicate: [1, 2, 3]
+        domain: [public_health, critical_infrastructure, cyber_incident, disaster_response, public_governance, crisis_communication]
     runs-on: ubuntu-latest
     environment: safeguardshift-v2-canonical
     steps:
@@ -62,22 +53,24 @@ jobs:
         with:
           python-version: '3.11'
       - run: python -m pip install -e .
-      - name: Compute shard hard cap
+      - name: Compute domain-shard hard cap
         id: cap
         shell: bash
         run: |
           CAP=$(python - <<'PY'
-          print(float("${{ inputs.total_budget_usd }}") * float("${{ matrix.budget_share }}"))
+          total=float("${{ inputs.total_budget_usd }}")
+          shares={0:0.1270,1:0.0646,2:0.0943,3:0.0439}
+          print(total*shares[int("${{ matrix.model_index }}")]/6.0)
           PY
           )
           echo "value=$CAP" >> "$GITHUB_OUTPUT"
-      - name: Run backbone shard
-        run: python scripts_v2/run_canonical.py --model-index ${{ matrix.model_index }} --replicate ${{ matrix.replicate }} --max-cost ${{ steps.cap.outputs.value }} --output results/private/v2/model${{ matrix.model_index }}-rep${{ matrix.replicate }}.jsonl
+      - name: Run backbone domain shard
+        run: python scripts_v2/run_canonical.py --model-index ${{ matrix.model_index }} --replicate ${{ matrix.replicate }} --domain ${{ matrix.domain }} --max-cost ${{ steps.cap.outputs.value }} --output results/private/v2/model${{ matrix.model_index }}-rep${{ matrix.replicate }}-${{ matrix.domain }}.jsonl
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: v2-model${{ matrix.model_index }}-rep${{ matrix.replicate }}
+          name: v2-model${{ matrix.model_index }}-rep${{ matrix.replicate }}-${{ matrix.domain }}
           path: results/private/v2/
           retention-days: 90

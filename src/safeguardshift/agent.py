@@ -12,16 +12,22 @@ def run(client:Client,spec:ModelSpec,env:Environment,replicate:int,max_turns:int
     for turn in range(max_turns):
         final=turn==max_turns-1; use_tools=submit if final else tools
         choice={"type":"function","function":{"name":"submit_final_plan"}} if final else "auto"
-        resp=client.chat(spec,messages,use_tools,tool_choice=choice,max_tokens=350); msg=resp["choices"][0]["message"]; calls=(msg.get("tool_calls") or [])[:1]
+        resp=client.chat(spec,messages,use_tools,tool_choice=choice,max_tokens=350); choice_obj=resp["choices"][0]; msg=choice_obj["message"]
+        all_calls=msg.get("tool_calls") or []; calls=all_calls[:1]
         am={"role":"assistant","content":msg.get("content")}
         if calls:am["tool_calls"]=calls
         messages.append(am)
-        event={"turn":turn,"assistant":msg,"response_id":resp.get("id"),"routed_model":resp.get("model"),"provider_response":{k:v for k,v in resp.items() if k!="_safeguardshift_request"},"request":resp.get("_safeguardshift_request"),"forced_terminal_turn":final}
+        event={
+            "turn":turn,"assistant":msg,"response_id":resp.get("id"),"routed_model":resp.get("model"),"routed_provider":resp.get("provider"),
+            "finish_reason":choice_obj.get("finish_reason"),"usage":resp.get("usage"),
+            "provider_response":{k:v for k,v in resp.items() if k!="_safeguardshift_request"},"request":resp.get("_safeguardshift_request"),
+            "forced_terminal_turn":final,"discarded_parallel_tool_calls":max(0,len(all_calls)-1),"tool_arguments_parse_error":False,
+        }
         traj.append(event)
         if not calls:continue
         tc=calls[0]
         try:args=json.loads(tc["function"].get("arguments") or "{}")
-        except json.JSONDecodeError:args={}
+        except json.JSONDecodeError:args={};event["tool_arguments_parse_error"]=True
         name=tc["function"]["name"]; result=env.tool(name,args);event["tool"]={"name":name,"arguments":args,"result":result}
         messages.append({"role":"tool","tool_call_id":tc["id"],"name":name,"content":json.dumps(result,sort_keys=True)})
         if name=="submit_final_plan":break
