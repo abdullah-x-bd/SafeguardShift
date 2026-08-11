@@ -2,7 +2,9 @@ from __future__ import annotations
 import argparse,hashlib,json
 from pathlib import Path
 
-def sha256(path:Path)->str:return hashlib.sha256(path.read_bytes()).hexdigest()
+def sha256(path:Path)->str:
+    data=path.read_bytes().replace(b"\r\n",b"\n").replace(b"\r",b"\n")
+    return hashlib.sha256(data).hexdigest()
 
 def main()->None:
     ap=argparse.ArgumentParser();ap.add_argument("path",nargs="?",default="results/v2/construct_validation.json");args=ap.parse_args()
