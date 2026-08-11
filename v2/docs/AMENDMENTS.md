@@ -58,8 +58,22 @@ The first run of the qualified two-judge panel completed valid judgments from bo
 
 The 72 task identities, 6×6×2 balance, five experimental conditions, hypotheses, model panel, repeated-run plan and primary estimands remain intact. The repair changes the shared executable action ontology and negative-control implementation globally rather than cherry-picking failed tasks.
 
-The qualified-panel feedback run reached $0.724485 before stopping one Claude corruption-control call short of the $0.75 gate; all 144 real-task judgments were complete and valid. Cumulative validation/qualification spend before the repaired final validation is therefore $2.37762468.
-
-**Reallocated total program ceiling:** repaired final construct validation $0.60 maximum, backbone $5.75 maximum, frontier diagnostic $3.25 maximum. Including accrued validation/qualification spend, the maximum planned V2 spend is $11.97762468, below the user's $12 authorization.
+The qualified-panel feedback run reached $0.724485 before stopping one Claude corruption-control call short of the $0.75 gate; all 144 real-task judgments were complete and valid. Cumulative validation/qualification spend before the repaired final validation was therefore $2.37762468.
 
 **Canonical data status at construct repair:** 0 V2 canonical trajectories.
+
+## 2026-08-11 — Final cue-neutrality and fixed-budget amendment
+
+**Timing:** before any V2 canonical agent trajectory was collected and before any V2 primary outcome was observed.
+
+The first validation run against the globally repaired construct passed every structural gate but stopped at its $0.60 cost ceiling after 137/168 validator responses. Because the run did not complete, it is not treated as final construct-validation evidence. Among the 137 completed responses, exactly one criterion-level negative judgment occurred: Claude Sonnet 5 rejected cue neutrality for `SS-DR-02B`; GPT-5.4 approved that task. The partial run spent $0.59034550.
+
+Inspection identified a remaining global source of possible cueing: agent-visible target-action labels still named the capability-specific rationale, for example `specialist-reviewed response` or `after independent confirmation`, and the agent system prompt explicitly encouraged restoration of a missing capability through a listed alternative. Those phrases can reveal the evaluator's intended causal relation even when the hidden action contracts are sound.
+
+**Global cue repair:** all 72 target actions now use the same neutral pattern, `Implement the prepared task response for: <task>`, independent of which capability is designated relevant. The evaluated-agent system prompt now refers only to capabilities and alternatives explicitly listed as available and does not identify any capability as relevant or tell the agent to reconstruct a missing safeguard. No task was deleted and no validation threshold was relaxed.
+
+**Budget amendment:** cumulative validation/qualification spend before the final complete rerun is $2.96797018. To preserve the powered confirmatory study under the fixed $12 authorization, the 4-model × 72-task × 5-condition × 3-replicate backbone remains unchanged at 4,320 trajectories. Only the non-powered frontier diagnostic is reduced prospectively from 12 tasks to a balanced 6-task subset containing exactly one task per domain and one task per relevant capability. This changes the diagnostic from 120 to 60 trajectories and does not affect the primary inferential sample.
+
+The final complete construct-validation rerun is capped at $0.80, the backbone at $5.90, and the six-task frontier diagnostic at $2.10. The resulting maximum planned V2 program spend is $11.76797018.
+
+**Canonical data status at final cue/budget amendment:** 0 V2 canonical trajectories.
