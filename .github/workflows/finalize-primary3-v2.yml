@@ -15,12 +15,13 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
     steps:
-      - name: Cancel superseded DeepSeek and four-model finalizer
+      - name: Cancel superseded recovery/finalization runs
         shell: bash
         run: |
           set +e
           gh api -X POST "repos/${GITHUB_REPOSITORY}/actions/runs/31461817984/cancel"
           gh api -X POST "repos/${GITHUB_REPOSITORY}/actions/runs/31461922867/cancel"
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/actions/runs/31465610232/cancel"
           exit 0
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -31,34 +32,18 @@ jobs:
       - run: python scripts_v2/run_oracle.py
       - run: python scripts_v2/check_freeze.py
       - run: python scripts_v2/check_construct_validation.py results/v2/construct_validation.json
-      - name: Wait for complete stable-model source artifacts
+      - name: Download only stable-model source artifacts
         shell: bash
         run: |
           set -euo pipefail
-          wait_for_artifacts() {
-            local run_id="$1" minimum="$2" label="$3"
-            for i in $(seq 1 120); do
-              count=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts?per_page=100" --jq '.total_count')
-              echo "$label artifacts: $count / >=$minimum"
-              if [ "$count" -ge "$minimum" ]; then return 0; fi
-              sleep 15
-            done
-            echo "Timed out waiting for $label artifacts" >&2
-            return 1
-          }
-          wait_for_artifacts 31456685835 72 original
-          wait_for_artifacts 31459468529 6 gemini_recovery
-          wait_for_artifacts 31460302065 6 mistral_recovery
-          wait_for_artifacts 31456858244 3 frontier
-      - name: Download fixed source artifacts
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p incoming/original incoming/gemini incoming/mistral incoming/frontier incoming/deepseek_old incoming/deepseek_robust
-          gh run download 31456685835 --dir incoming/original
+          mkdir -p incoming/original incoming/gemini incoming/mistral incoming/frontier incoming/deepseek_original incoming/deepseek_old incoming/deepseek_robust
+          gh run download 31456685835 -p 'v2-model0-*' --dir incoming/original
+          gh run download 31456685835 -p 'v2-model1-*' --dir incoming/original
+          gh run download 31456685835 -p 'v2-model3-*' --dir incoming/original
           gh run download 31459468529 --dir incoming/gemini
           gh run download 31460302065 --dir incoming/mistral
           gh run download 31456858244 -n safeguardshift-v2-frontier-combined --dir incoming/frontier
+          gh run download 31456685835 -p 'v2-model2-*' --dir incoming/deepseek_original || true
           gh run download 31459468549 --dir incoming/deepseek_old || true
           gh run download 31461817984 --dir incoming/deepseek_robust || true
           frontier=$(find incoming/frontier -type f -name 'canonical-frontier.jsonl' | head -n 1)
@@ -106,7 +91,7 @@ jobs:
       - name: Assemble preserved DeepSeek provider diagnostic
         run: |
           python scripts_v2/assemble_deepseek_diagnostic.py \
-            --source original=incoming/original \
+            --source original=incoming/deepseek_original \
             --source first_recovery=incoming/deepseek_old \
             --source robust_recovery=incoming/deepseek_robust \
             --output results/private/v2/deepseek-provider-diagnostic.jsonl \
