@@ -1,0 +1,30 @@
+name: SafeguardShift V2 validator qualification
+on:
+  pull_request:
+    paths:
+      - 'v2/RUN_VALIDATOR_QUALIFICATION'
+permissions:
+  contents: read
+jobs:
+  qualify:
+    if: github.head_ref == 'run/v2-validator-qualification'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e '.[dev]'
+      - run: pytest
+      - run: safeguardshift verify
+      - run: python scripts_v2/check_freeze.py
+      - name: Qualify candidate validators on corruption controls only
+        run: python scripts_v2/qualify_validator_candidates.py --max-cost 0.20 --output results/private/v2/validator_qualification.json
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: safeguardshift-v2-validator-qualification
+          path: results/private/v2/validator_qualification.json
+          retention-days: 90
