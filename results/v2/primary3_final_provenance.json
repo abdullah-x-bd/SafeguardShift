@@ -1,0 +1,90 @@
+{
+  "acceptance_policy": "fixed prior matrix has strict priority; fallback rows fill absent keys only; no accepted row replaced",
+  "amendments": [
+    "005",
+    "006",
+    "007",
+    "008",
+    "009",
+    "010"
+  ],
+  "conditional_fallback_missing_cells": 18,
+  "deepseek_role": "provider/interface reliability diagnostic only",
+  "fallback_failure_records": 0,
+  "fallback_provider_policy": {
+    "allow_fallbacks": true,
+    "ignore": [
+      "mistral"
+    ],
+    "order": [
+      "deepinfra",
+      "venice"
+    ],
+    "require_parameters": true
+  },
+  "files": {
+    "results/private/v2/canonical-frontier.jsonl": {
+      "bytes": 1329252,
+      "sha256": "698962393621163cba9eaff7f1790a4f0ead74d14a081a676da98a2702278d4c"
+    },
+    "results/private/v2/canonical-primary3.jsonl": {
+      "bytes": 62792768,
+      "sha256": "d973aeedf05d9cae38cc859fc9249c3f6859eb8947b586e8d256dad6912f0597"
+    },
+    "results/private/v2/deepseek-provider-diagnostic.jsonl": {
+      "bytes": 11801930,
+      "sha256": "e42f901067904abeba8100c2e2aa94551e7dbf1b72f223be0d0cf0b0f3f21d97"
+    },
+    "results/private/v2/primary3-missing-final.json": {
+      "bytes": 3,
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    "results/v2/deepseek_provider_diagnostic.json": {
+      "bytes": 1241,
+      "sha256": "b78898f24a2cd2ec6489ed32dee69a30d722278ba7284f80c6e832e0fff9c28e"
+    },
+    "results/v2/frontier_summary.json": {
+      "bytes": 920,
+      "sha256": "8009e192f6b325b78eddce16ba023298deb0a7548b0d01251cd367219b46d069"
+    },
+    "results/v2/primary3_canonical_verification.json": {
+      "bytes": 596,
+      "sha256": "3ddabe75a792ce6e57b7b2e3b1a38ad5cc980b51b8c16ca7ead14eef91b52f56"
+    },
+    "results/v2/primary3_summary.json": {
+      "bytes": 10490,
+      "sha256": "1e04614396640444a5ba4352dd09228951c171eebd91990da7142af9335227ec"
+    },
+    "v2/amendments/005_primary_estimand_provider_attrition.md": {
+      "bytes": 3685,
+      "sha256": "d2f206d353fba3332fd604a29dbe3322b6c3b2fa39c22973a2174ece91cd204e"
+    },
+    "v2/amendments/006_residual_transport_retry.md": {
+      "bytes": 1763,
+      "sha256": "f419c613c64e1589d3358c6b9a49958366b7f203bb76ddb417befeacaa9d36bc"
+    },
+    "v2/amendments/007_mistral_transport_provider_substitution.md": {
+      "bytes": 1509,
+      "sha256": "b69780e5cb3ed4696af457df00cab4f92e2dc9581d2ce713357155d0c0614b38"
+    },
+    "v2/amendments/008_mistral_tool_aware_routing.md": {
+      "bytes": 2992,
+      "sha256": "2d555719ea4be9a0483db284f2aec911d08b425d627cf49f86d85b0cf88b1df6"
+    },
+    "v2/amendments/009_per_cell_transport_continuation.md": {
+      "bytes": 2074,
+      "sha256": "7ff50c6f4771a960aa0022d226d5fac4a95cb85b9d338442a5ee800663ab82e4"
+    },
+    "v2/amendments/010_deepinfra_venice_transport_fallback.md": {
+      "bytes": 2400,
+      "sha256": "d47b7e2d7d25ce9af65c71839410ffd065de8f6831605a329c91fc6cf9a9723f"
+    }
+  },
+  "fixed_pre_fallback_cells": 3222,
+  "primary_estimand": "3 backbone models x 72 tasks x 5 conditions x 3 replicates = 3240 cells",
+  "protocol": "safeguardshift-v2.0.0",
+  "successful_fallback_call_provider_counts": {
+    "DeepInfra": 107,
+    "Venice": 1
+  }
+}

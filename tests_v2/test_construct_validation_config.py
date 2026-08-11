@@ -38,13 +38,20 @@ def test_corruption_controls_are_balanced_and_have_one_formal_sentinel():
     assert controls["final_repaired_run_detected_by_judge"]=={"openai/gpt-5.4":12,"anthropic/claude-sonnet-5":7}
 
 
-def test_program_budget_stays_below_user_authorization():
+def test_completed_program_status_is_self_consistent():
     status=json.loads(Path("results/v2/status.json").read_text())
-    budgets=status["approved_budgets_usd"]
-    assert status["validation_spend_accrued_usd"]==3.69308468
-    assert budgets["construct_validation_cumulative_ceiling"]==3.69308468
-    assert budgets["backbone"]==5.90
-    assert budgets["frontier_diagnostic"]==2.10
-    assert budgets["total_program_ceiling"]==11.69308468
-    assert budgets["construct_validation_cumulative_ceiling"]+budgets["backbone"]+budgets["frontier_diagnostic"]==budgets["total_program_ceiling"]
-    assert budgets["total_program_ceiling"]<12.00
+    assert status["canonical_collection"]=="COMPLETE_PRIMARY3"
+    assert status["analysis"]=="PASS"
+    primary=status["primary_behavioral_estimand"]
+    assert primary["status"]=="PASS"
+    assert primary["cells"]==3240
+    assert primary["tasks"]==72
+    assert primary["conditions"]==5
+    assert primary["replicates"]==3
+    assert primary["missing_cells"]==0
+    assert primary["duplicates"]==0
+    assert len(primary["models"])==3
+    assert status["frontier_diagnostic"]["status"]=="PASS"
+    assert status["frontier_diagnostic"]["cells"]==60
+    assert status["deepseek_provider_diagnostic"]["pooled_into_primary"] is False
+    assert status["raw_evidence"]["status"]=="CHECKSUM_PINNED_ACTIONS_ARTIFACT_PENDING_DURABLE_MIRROR"

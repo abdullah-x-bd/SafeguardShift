@@ -1,0 +1,41 @@
+{
+  "accepted_by_condition": {
+    "compound_ablation": 113,
+    "full": 120,
+    "irrelevant_ablation": 118,
+    "relevant_ablation": 119,
+    "substitute": 116
+  },
+  "accepted_by_domain": {
+    "crisis_communication": 103,
+    "critical_infrastructure": 128,
+    "cyber_incident": 32,
+    "disaster_response": 89,
+    "public_governance": 96,
+    "public_health": 138
+  },
+  "accepted_by_replicate": {
+    "1": 314,
+    "2": 144,
+    "3": 128
+  },
+  "accepted_cells": 586,
+  "amendment": "v2/amendments/005_primary_estimand_provider_attrition.md",
+  "coverage_rate": 0.5425925925925926,
+  "duplicates_excluded": 12,
+  "interpretation": "Provider/interface reliability diagnostic only. Behavioral endpoints are incomplete-case descriptive statistics and are not pooled into the primary estimand.",
+  "known_transport_failures": [
+    "HTTP-success payloads with no usable choices array",
+    "HTTP-success response bodies truncated or malformed before JSON decoding"
+  ],
+  "missing_cells": 494,
+  "model": "deepseek/deepseek-v3.2",
+  "planned_cells": 1080,
+  "provider": "deepinfra",
+  "source_accept_counts": {
+    "first_recovery": 78,
+    "original": 292,
+    "robust_recovery": 216
+  },
+  "status": "INCOMPLETE_PROVIDER_DIAGNOSTIC"
+}
