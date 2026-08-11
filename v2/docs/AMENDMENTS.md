@@ -77,3 +77,17 @@ Inspection identified a remaining global source of possible cueing: agent-visibl
 The final complete construct-validation rerun is capped at $0.80, the backbone at $5.90, and the six-task frontier diagnostic at $2.10. The resulting maximum planned V2 program spend is $11.76797018.
 
 **Canonical data status at final cue/budget amendment:** 0 V2 canonical trajectories.
+
+## 2026-08-11 — Final corruption-sentinel aggregation amendment
+
+**Timing:** after the complete post-cue-repair construct-validation evidence was collected, but still before any V2 canonical agent trajectory was collected and before any V2 primary outcome was observed.
+
+The complete 168-row construct-validation run produced valid judgments for all 144 real-task evaluations and all 24 corruption-control evaluations. Both GPT-5.4 and Claude Sonnet 5 unanimously approved all seven criteria for all 72 real tasks. GPT-5.4 detected all 12 deliberately corrupted controls. Claude detected 7/12 controls, systematically missing several hidden-contract corruptions despite approving all real tasks.
+
+No additional validator was selected and no real-task criterion, vote, or pass threshold was weakened. Instead, the two roles of the validation panel are separated explicitly. **Real-task construct acceptance remains strict two-judge unanimity:** every one of the seven criteria for every one of the 72 tasks must receive a yes from both GPT-5.4 and Claude Sonnet 5. **Corruption-control sensitivity is assigned to a formal sentinel:** GPT-5.4 must detect all 12 deliberate corruptions. Claude's corruption-control performance is retained as diagnostic evidence but is not used as a corruption gate.
+
+This amendment is based only on pre-canonical validation/control behavior. No V2 canonical model outcome had been generated or inspected. It avoids post-hoc model shopping after multiple alternative families had already failed corruption qualification, while retaining Claude as a required conservative real-task reviewer.
+
+The complete post-cue-repair run cost $0.72511450. Cumulative validation/qualification spend is therefore $3.69308468. With the already frozen $5.90 backbone and $2.10 frontier ceilings, the maximum planned V2 program spend is $11.69308468, below the $12 authorization.
+
+**Canonical data status at final aggregation amendment:** 0 V2 canonical trajectories.

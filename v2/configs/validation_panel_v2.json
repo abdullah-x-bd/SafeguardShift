@@ -1,11 +1,13 @@
 {
   "panel_id": "safeguardshift-v2-construct-validation-final-2026-08-11",
   "purpose": "Precanonical validation of synthetic benchmark construct quality only. Validators never score canonical model outputs.",
-  "selection_rule": "Validators are retained only if they produced 12/12 valid structured responses and detected at least 8/12 deliberately corrupted specifications in control-only qualification. Selection never used the 72 canonical task judgments.",
+  "selection_rule": "Validator qualification and every aggregation amendment use only pre-canonical construct evidence and deliberate corruption controls, never canonical agent outcomes. The final real-task rule remains unanimous approval by GPT-5.4 and Claude Sonnet 5.",
   "aggregation": {
-    "criterion_pass_rule": "both_qualified_judges_yes",
+    "criterion_pass_rule": "both_task_judges_yes",
     "task_pass_rule": "all_7_criteria_pass",
-    "benchmark_pass_rule": "all_72_tasks_pass_and_both_judges_reject_all_12_corruption_controls",
+    "benchmark_pass_rule": "all_72_tasks_pass_both_judges_and_gpt54_sentinel_rejects_all_12_corruption_controls",
+    "corruption_sentinel": "openai/gpt-5.4",
+    "secondary_control_performance_is_diagnostic_only": true,
     "confidence_is_diagnostic_only": true
   },
   "criteria": [
@@ -25,7 +27,8 @@
       "temperature": null,
       "reserve_usd": 0.006,
       "validation_max_tokens": 120,
-      "qualification": {"valid_responses": 12, "detected_controls": 12, "required_detected": 8, "status": "PASS"}
+      "qualification": {"valid_responses": 12, "detected_controls": 12, "required_detected": 8, "status": "PASS"},
+      "final_repaired_run": {"real_tasks_approved": 72, "real_tasks_total": 72, "controls_detected": 12, "controls_total": 12, "role": "corruption_sentinel_and_task_judge"}
     },
     {
       "id": "anthropic/claude-sonnet-5",
@@ -34,7 +37,8 @@
       "temperature": null,
       "reserve_usd": 0.012,
       "validation_max_tokens": 220,
-      "qualification": {"valid_responses": 12, "detected_controls": 12, "required_detected": 8, "status": "PASS"}
+      "qualification": {"valid_responses": 12, "detected_controls": 12, "required_detected": 8, "status": "PASS"},
+      "final_repaired_run": {"real_tasks_approved": 72, "real_tasks_total": 72, "controls_detected": 7, "controls_total": 12, "role": "unanimous_task_judge_control_performance_diagnostic"}
     }
   ],
   "rejected_candidates": [
@@ -58,8 +62,10 @@
       "SS-PH-05A",
       "SS-PH-06A"
     ],
-    "panel_rule": "both_qualified_judges_reject_each_corrupted_item",
-    "per_judge_minimum_detected": 12
+    "sentinel_judge": "openai/gpt-5.4",
+    "sentinel_required_detected": 12,
+    "secondary_judge_control_result": "diagnostic_only",
+    "final_repaired_run_detected_by_judge": {"openai/gpt-5.4": 12, "anthropic/claude-sonnet-5": 7}
   },
   "claim_boundary": "Passing this panel supports internal construct coherence of the controlled synthetic benchmark. It does not certify real-world domain validity or replace external domain expertise."
 }
