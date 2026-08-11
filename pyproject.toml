@@ -1,37 +1,29 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.build_meta"
+requires=["setuptools>=68","wheel"]
+build-backend="setuptools.build_meta"
 
 [project]
-name = "crisisbench"
-version = "1.0.0"
-description = "Agentic benchmark for capacity-conditioned safety under institutional safeguard ablation"
-readme = "README.md"
-requires-python = ">=3.11"
-license = {text = "Apache-2.0"}
-authors = [{name = "Abdullah X"}]
-keywords = ["ai-safety", "agents", "evaluation", "institutional-capacity", "benchmark", "openrouter"]
-classifiers = [
-  "Development Status :: 4 - Beta",
-  "Intended Audience :: Science/Research",
-  "License :: OSI Approved :: Apache Software License",
-  "Programming Language :: Python :: 3",
-  "Topic :: Scientific/Engineering :: Artificial Intelligence",
-]
-dependencies = []
+name="safeguardshift"
+version="2.0.0"
+description="Controlled agent benchmark for institutional safeguard sensitivity and resilience"
+readme="README.md"
+requires-python=">=3.11"
+license={text="Apache-2.0"}
+authors=[{name="Abdullah X"}]
+dependencies=[]
 
 [project.optional-dependencies]
-dev = ["pytest>=8"]
+dev=["pytest>=8"]
 
 [project.scripts]
-crisisbench = "crisisbench.cli:main"
+safeguardshift="safeguardshift.cli:main"
 
 [tool.setuptools]
-package-dir = {"" = "src"}
+package-dir={""="src"}
 
 [tool.setuptools.packages.find]
-where = ["src"]
+where=["src"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
-addopts = "-q"
+testpaths=["tests_v2"]
+addopts="-q"
