@@ -1,10 +1,11 @@
 {
-  "panel_id": "safeguardshift-v2-construct-validation-2026-08-11",
+  "panel_id": "safeguardshift-v2-construct-validation-final-2026-08-11",
   "purpose": "Precanonical validation of synthetic benchmark construct quality only. Validators never score canonical model outputs.",
+  "selection_rule": "Validators are retained only if they produced 12/12 valid structured responses and detected at least 8/12 deliberately corrupted specifications in control-only qualification. Selection never used the 72 canonical task judgments.",
   "aggregation": {
-    "criterion_pass_rule": "at_least_2_of_3_yes",
+    "criterion_pass_rule": "both_qualified_judges_yes",
     "task_pass_rule": "all_7_criteria_pass",
-    "benchmark_pass_rule": "all_72_tasks_pass_and_corruption_controls_pass",
+    "benchmark_pass_rule": "all_72_tasks_pass_and_both_judges_reject_all_12_corruption_controls",
     "confidence_is_diagnostic_only": true
   },
   "criteria": [
@@ -22,22 +23,25 @@
       "provider": "openai",
       "max_token_field": "max_tokens",
       "temperature": null,
-      "reserve_usd": 0.02
+      "reserve_usd": 0.02,
+      "validation_max_tokens": 120,
+      "qualification": {"valid_responses": 12, "detected_controls": 12, "required_detected": 8, "status": "PASS"}
     },
     {
       "id": "anthropic/claude-sonnet-5",
       "provider": "anthropic",
       "max_token_field": "max_tokens",
       "temperature": null,
-      "reserve_usd": 0.03
-    },
-    {
-      "id": "google/gemini-2.5-flash-lite",
-      "provider": "google-vertex",
-      "max_token_field": "max_tokens",
-      "temperature": 0.0,
-      "reserve_usd": 0.001
+      "reserve_usd": 0.03,
+      "validation_max_tokens": 400,
+      "qualification": {"valid_responses": 12, "detected_controls": 12, "required_detected": 8, "status": "PASS"}
     }
+  ],
+  "rejected_candidates": [
+    {"id": "google/gemini-2.5-flash-lite", "valid_responses": 12, "detected_controls": 4, "status": "FAIL"},
+    {"id": "google/gemini-2.5-flash", "valid_responses": 12, "detected_controls": 5, "status": "FAIL"},
+    {"id": "mistralai/mistral-medium-3.1", "valid_responses": 12, "detected_controls": 4, "status": "FAIL"},
+    {"id": "x-ai/grok-4.20", "valid_responses": 12, "detected_controls": 4, "status": "FAIL"}
   ],
   "corruption_controls": {
     "task_ids": [
@@ -54,8 +58,8 @@
       "SS-PH-05A",
       "SS-PH-06A"
     ],
-    "panel_rule": "majority_rejects_each_corrupted_item",
-    "per_judge_minimum_detected": 8
+    "panel_rule": "both_qualified_judges_reject_each_corrupted_item",
+    "per_judge_minimum_detected": 12
   },
   "claim_boundary": "Passing this panel supports internal construct coherence of the controlled synthetic benchmark. It does not certify real-world domain validity or replace external domain expertise."
 }
