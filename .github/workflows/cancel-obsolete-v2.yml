@@ -8,7 +8,7 @@ permissions:
   contents: read
 jobs:
   cancel:
-    if: github.head_ref == 'run/v2-primary3-mistral-official-final'
+    if: github.head_ref == 'run/v2-primary3-mistral-routed-final'
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
@@ -20,9 +20,10 @@ jobs:
           repo='abdullah-x-bd/crisisbench'
           for workflow in \
             'SafeguardShift V2 parallel exact primary finalization' \
-            'SafeguardShift V2 exact residual primary finalization'; do
+            'SafeguardShift V2 exact residual primary finalization' \
+            'SafeguardShift V2 official-Mistral residual completion'; do
             for id in $(gh run list -R "$repo" --workflow "$workflow" --limit 30 --json databaseId,status --jq '.[] | select(.status != "completed") | .databaseId'); do
               gh run cancel "$id" -R "$repo" || true
             done
           done
-          echo 'Cancelled obsolete Venice/parallel finalizers.'
+          echo 'Cancelled obsolete Venice and pinned-official finalizers.'
