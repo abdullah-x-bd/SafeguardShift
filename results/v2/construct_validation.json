@@ -1,0 +1,11 @@
+{
+  "protocol": "safeguardshift-v2.0.0",
+  "validation_regime": "triangulated_synthetic_construct_validation",
+  "status": "NOT_RUN",
+  "tasks_expected": 72,
+  "tasks_validated": 0,
+  "task_pass_count": 0,
+  "failed_tasks": [],
+  "corruption_controls": {"status": "NOT_RUN"},
+  "claim_boundary": "No external domain-expert certification is claimed. Canonical collection remains blocked until the frozen synthetic construct-validation panel passes."
+}

@@ -7,9 +7,12 @@ FREEZE_FILES = [
     "v2/configs/model_panel_v2.json",
     "v2/configs/analysis_v2.json",
     "v2/configs/frontier_subset_v2.json",
+    "v2/configs/validation_panel_v2.json",
     "v2/data/base_tasks_manifest.json",
     "v2/docs/HYPOTHESES.md",
     "v2/docs/SCORING.md",
+    "v2/docs/CONSTRUCT_VALIDATION.md",
+    "v2/docs/AMENDMENTS.md",
 ]
 
 

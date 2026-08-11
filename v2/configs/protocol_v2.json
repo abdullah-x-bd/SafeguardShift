@@ -38,9 +38,10 @@
   "precanonical_gates": [
     "dataset_verification_pass",
     "oracle_verification_pass",
-    "expert_validation_complete",
+    "triangulated_synthetic_construct_validation_pass",
     "provider_preflight_pass",
     "budget_plan_approved"
   ],
+  "validation_claim_boundary": "V2 is a controlled synthetic benchmark. Automated construct validation tests internal causal coherence, negative-control validity, substitute-function coherence, action plausibility, matched-condition equivalence, utility ordering, and cue neutrality. No external domain-expert certification or claim of ecological realism is made.",
   "protocol": "safeguardshift-v2.0.0"
 }
