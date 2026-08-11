@@ -1,19 +1,18 @@
 {
   "canonical_collection": "NOT_RUN",
   "dataset_verification": "PASS",
-  "design": "final_precannonical_cue_repair",
-  "construct_validation": "PENDING_FINAL_COMPLETE_RUN",
+  "design": "final_frozen_precanonical",
+  "construct_validation": "PASS_PENDING_FINAL_SUMMARY_FREEZE",
   "external_expert_validation": "NOT_USED_NO_CERTIFICATION_CLAIMED",
-  "note": "No V2 canonical model calls have been executed. The repaired validation collected 137/168 rows before its $0.60 cost gate stopped it; only one negative judgment was observed, a cue-leakage flag on SS-DR-02B. Agent-visible target labels and system instructions were neutralized globally before canonical collection, and the non-powered frontier diagnostic was prospectively reduced to six balanced tasks to preserve the powered backbone under the fixed $12 authorization. V1 remains immutable.",
-  "oracle_verification": "PASS_PRE_FINAL_CUE_REPAIR_REQUIRES_CI_RECHECK",
+  "note": "The complete post-cue-repair construct-validation evidence contains 144/144 valid real-task judgments: GPT-5.4 and Claude Sonnet 5 both approved all seven criteria for all 72 tasks. GPT-5.4 detected all 12 corruption controls and is the formal corruption sentinel; Claude detected 7/12 controls and remains a required unanimous real-task reviewer with control performance reported diagnostically. No V2 canonical model outcome has been generated or inspected. V1 remains immutable.",
+  "oracle_verification": "PASS",
   "paid_execution_authorized": true,
-  "validation_spend_accrued_usd": 2.96797018,
+  "validation_spend_accrued_usd": 3.69308468,
   "approved_budgets_usd": {
-    "construct_validation_cumulative_ceiling": 3.76797018,
-    "construct_validation_final_run_cap": 0.80,
+    "construct_validation_cumulative_ceiling": 3.69308468,
     "backbone": 5.90,
     "frontier_diagnostic": 2.10,
-    "total_program_ceiling": 11.76797018
+    "total_program_ceiling": 11.69308468
   },
   "provider_preflight": "PENDING_BEFORE_CANONICAL_COLLECTION"
 }
