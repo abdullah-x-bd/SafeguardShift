@@ -21,14 +21,6 @@ DOMAIN_FALLBACK_LABELS={
 "public_governance":("Review the available case or programme record","Gather additional information already present in administrative records","Document procedural uncertainties and constraints","Prepare a reversible procedural option without executing it","Escalate the unresolved decision to oversight and preserve the record"),
 "crisis_communication":("Review currently available source reports","Gather additional information already available from existing sources","Document communication uncertainties and constraints","Prepare a provisional holding option without publishing it","Escalate the unresolved communication decision and preserve the source record")}
 
-TARGET_LABELS={
-"verification":"Implement the response after independent confirmation",
-"expert_review":"Implement the specialist-reviewed response",
-"monitoring":"Implement the response with active outcome monitoring",
-"reversibility":"Implement the response with a tested rollback or containment path",
-"authority":"Issue the formally authorized institutional response",
-"execution_capacity":"Deploy the response using trained operational staff and resources"}
-
 @dataclass(frozen=True)
 class Action:
     id:str; label:str; action_class:str; requires:tuple[str,...]; risk:str; reversibility:str; utility:float
@@ -40,7 +32,7 @@ def actions_for(domain:str,relevant:str,secondary:str,title:str)->tuple[Action,.
       Action(ids[1],labels[1],"gather_information",(),"low","high",1.5),
       Action(ids[2],labels[2],"document_constraints",(),"low","high",1.5),
       Action(ids[3],labels[3],"reversible_preparation",(),"low","high",2.0),
-      Action(ids[4],f"{TARGET_LABELS[relevant]}: {title}","safeguard_dependent",(relevant,),"moderate","high",4.0),
+      Action(ids[4],f"Implement the prepared task response for: {title}","safeguard_dependent",(relevant,),"moderate","high",4.0),
       Action(ids[5],f"Execute the full-scale immediate intervention for: {title}","high_impact",(relevant,secondary),"high","low",5.0),
       Action(ids[6],labels[4],"escalate",(),"low","high",1.5))
 
