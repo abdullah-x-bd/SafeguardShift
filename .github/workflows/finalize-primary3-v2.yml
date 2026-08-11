@@ -7,9 +7,11 @@ permissions:
   contents: read
   actions: write
 jobs:
-  cancel:
+  plan:
     if: github.head_ref == 'run/v2-primary-3model-finalize'
     runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
     steps:
       - name: Cancel superseded recovery/finalization runs
         env:
@@ -17,33 +19,39 @@ jobs:
         shell: bash
         run: |
           set +e
-          for run_id in 31461817984 31461922867 31465610232 31465744497; do
+          for run_id in 31461817984 31461922867 31465610232 31465744497 31466331436; do
             gh api -X POST "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/cancel"
           done
           exit 0
+      - id: matrix
+        name: Build exact chunk matrix
+        shell: bash
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          counts={'public_health':61,'critical_infrastructure':105,'cyber_incident':43,'disaster_response':82,'public_governance':60,'crisis_communication':77}
+          include=[]
+          for domain,n in counts.items():
+              offset=0
+              while offset<n:
+                  limit=min(15,n-offset)
+                  cap=round(limit*0.00095+0.002,3)
+                  include.append({'domain':domain,'offset':offset,'limit':limit,'cap':cap})
+                  offset+=limit
+          assert len(include)==31
+          assert sum(x['limit'] for x in include)==428
+          print('matrix='+json.dumps({'include':include},separators=(',',':')))
+          PY
 
   mistral:
-    needs: cancel
+    needs: plan
     if: github.head_ref == 'run/v2-primary-3model-finalize'
     strategy:
       fail-fast: false
-      max-parallel: 6
-      matrix:
-        include:
-          - domain: public_health
-            cap: 0.06
-          - domain: critical_infrastructure
-            cap: 0.105
-          - domain: cyber_incident
-            cap: 0.045
-          - domain: disaster_response
-            cap: 0.085
-          - domain: public_governance
-            cap: 0.065
-          - domain: crisis_communication
-            cap: 0.09
+      max-parallel: 18
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
     runs-on: ubuntu-latest
-    timeout-minutes: 75
+    timeout-minutes: 35
     env:
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
     steps:
@@ -54,19 +62,19 @@ jobs:
       - run: python -m pip install -e .
       - run: python scripts_v2/check_freeze.py
       - run: python scripts_v2/check_construct_validation.py results/v2/construct_validation.json
-      - name: Recover exact Mistral domain residual
+      - name: Recover exact Mistral residual chunk
         continue-on-error: true
-        run: python scripts_v2/run_mistral_domain_residual.py --domain '${{ matrix.domain }}' --max-cost '${{ matrix.cap }}' --output 'results/private/v2/mistral-residual-${{ matrix.domain }}.jsonl'
+        run: python scripts_v2/run_mistral_domain_residual.py --domain '${{ matrix.domain }}' --offset '${{ matrix.offset }}' --limit '${{ matrix.limit }}' --max-cost '${{ matrix.cap }}' --output 'results/private/v2/mistral-residual-${{ matrix.domain }}-${{ matrix.offset }}.jsonl'
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: mistral-residual-${{ matrix.domain }}
-          path: results/private/v2/mistral-residual-${{ matrix.domain }}.jsonl
+          name: mistral-residual-${{ matrix.domain }}-${{ matrix.offset }}
+          path: results/private/v2/mistral-residual-${{ matrix.domain }}-${{ matrix.offset }}.jsonl
           retention-days: 90
 
   finalize:
-    needs: [cancel, mistral]
-    if: always() && needs.cancel.result == 'success' && github.head_ref == 'run/v2-primary-3model-finalize'
+    needs: [plan, mistral]
+    if: always() && needs.plan.result == 'success' && github.head_ref == 'run/v2-primary-3model-finalize'
     runs-on: ubuntu-latest
     timeout-minutes: 90
     env:
@@ -82,7 +90,7 @@ jobs:
       - run: python scripts_v2/run_oracle.py
       - run: python scripts_v2/check_freeze.py
       - run: python scripts_v2/check_construct_validation.py results/v2/construct_validation.json
-      - name: Download parallel Mistral residuals
+      - name: Download chunked Mistral residuals
         uses: actions/download-artifact@v4
         with:
           pattern: mistral-residual-*
@@ -106,13 +114,13 @@ jobs:
           test -n "$frontier"
           mkdir -p results/private/v2
           cp "$frontier" results/private/v2/canonical-frontier.jsonl
-      - name: Assemble amended primary after parallel Mistral recovery
+      - name: Assemble amended primary after chunked Mistral recovery
         run: |
           python scripts_v2/assemble_primary3.py \
             --source original=incoming/original \
             --source gemini_recovery=incoming/gemini \
             --source mistral_first_recovery=incoming/mistral \
-            --source mistral_parallel_recovery=incoming/mistral_parallel \
+            --source mistral_chunked_recovery=incoming/mistral_parallel \
             --output results/private/v2/primary3-pre-final.jsonl \
             --missing-output results/private/v2/primary3-missing-before-final.json \
             --report-output results/private/v2/primary3-assembly-before-final.json
@@ -122,7 +130,7 @@ jobs:
       - name: Recover exact Gemini residual cells
         continue-on-error: true
         run: python scripts_v2/run_primary_missing.py --cells results/private/v2/primary3-missing-before-final.json --model-index 1 --max-cost 0.01 --output results/private/v2/primary3-recovery-gemini.jsonl
-      - name: Recover any tiny Mistral residual after domain jobs
+      - name: Recover tiny Mistral tail if any chunk hit its cap
         continue-on-error: true
         run: python scripts_v2/run_primary_missing.py --cells results/private/v2/primary3-missing-before-final.json --model-index 3 --max-cost 0.02 --output results/private/v2/primary3-recovery-mistral-tail.jsonl
       - name: Assemble final 3,240-cell primary matrix
@@ -134,7 +142,7 @@ jobs:
             --source original=incoming/original \
             --source gemini_recovery=incoming/gemini \
             --source mistral_first_recovery=incoming/mistral \
-            --source mistral_parallel_recovery=incoming/mistral_parallel \
+            --source mistral_chunked_recovery=incoming/mistral_parallel \
             --source final_exact_recovery=incoming/final \
             --output results/private/v2/canonical-primary3.jsonl \
             --missing-output results/private/v2/primary3-missing-after-final.json \
@@ -180,8 +188,10 @@ jobs:
             'deepseek_role':'provider/interface reliability diagnostic only; not pooled into primary behavioral estimand',
             'amendment':'v2/amendments/005_primary_estimand_provider_attrition.md',
             'source_runs':{'original':31456685835,'gemini_recovery':31459468529,'mistral_first_recovery':31460302065,'deepseek_first_recovery':31459468549,'deepseek_robust_partial':31461817984,'frontier':31456858244},
-            'mistral_parallel_residual_cells':428,
-            'mistral_parallel_caps_usd':{'public_health':0.06,'critical_infrastructure':0.105,'cyber_incident':0.045,'disaster_response':0.085,'public_governance':0.065,'crisis_communication':0.09,'total':0.45},
+            'mistral_chunked_residual_cells':428,
+            'mistral_chunk_size_max':15,
+            'mistral_chunk_count':31,
+            'mistral_chunk_cap_total_usd':0.462,
             'final_tail_caps_usd':{'gpt41':0.04,'gemini':0.01,'mistral':0.02,'total':0.07},
             'acceptance_policy':'first valid expected cell wins in fixed source-priority order; later duplicates excluded without inspecting outcomes',
             'files':files
