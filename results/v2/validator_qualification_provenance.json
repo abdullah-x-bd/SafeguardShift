@@ -1,0 +1,96 @@
+{
+  "protocol": "safeguardshift-v2.0.0",
+  "canonical_agent_trajectories_at_selection": 0,
+  "selection_basis": "12 deliberate corruption controls only; no validator was selected using the 72 canonical task judgments or any canonical agent outcome",
+  "qualified_judges": {
+    "openai/gpt-5.4": {
+      "provider": "openai",
+      "valid_responses": 12,
+      "detected_controls": 12,
+      "required_detected": 8,
+      "status": "PASS",
+      "evidence_source": "compact construct-validation control rows from Actions run 31450813297"
+    },
+    "anthropic/claude-sonnet-5": {
+      "provider": "anthropic",
+      "valid_responses": 12,
+      "detected_controls": 12,
+      "required_detected": 8,
+      "status": "PASS",
+      "evidence_source": "control-only qualification Actions run 31451873510",
+      "artifact_id": 9086606344,
+      "artifact_digest": "sha256:924b77fb2838f95cef25ee421d4b3a62b931fb73e34610a0d20158b0bd09b477"
+    }
+  },
+  "rejected_candidates": {
+    "google/gemini-2.5-flash-lite": {
+      "valid_responses": 12,
+      "detected_controls": 4,
+      "status": "FAIL",
+      "evidence_source": "compact construct-validation control rows from Actions run 31450813297"
+    },
+    "google/gemini-2.5-flash": {
+      "valid_responses": 12,
+      "detected_controls": 5,
+      "status": "FAIL",
+      "evidence_source": "control-only qualification Actions run 31451873510",
+      "artifact_id": 9086606344
+    },
+    "mistralai/mistral-medium-3.1": {
+      "valid_responses": 12,
+      "detected_controls": 4,
+      "status": "FAIL",
+      "cost_usd": 0.00429728,
+      "evidence_source": "control-only qualification Actions run 31452167464",
+      "artifact_id": 9086692043,
+      "artifact_digest": "sha256:adf8f96094ad0fc92a3ba2aeb454c8bb6a7f8ca5fd3253404375b0642ecd05de"
+    },
+    "x-ai/grok-4.20": {
+      "valid_responses": 12,
+      "detected_controls": 4,
+      "status": "FAIL",
+      "cost_usd": 0.0155067,
+      "evidence_source": "control-only qualification Actions run 31452359042",
+      "artifact_id": 9086759789,
+      "artifact_digest": "sha256:da41fc496d52a67bc0363f0b2a9d6e5a31aa5dbfa0f978508342e4e5f0213815"
+    }
+  },
+  "validation_execution_history": [
+    {
+      "run_id": 31449887716,
+      "classification": "non-evidentiary technical pilot",
+      "reason": "long forced-tool output schema caused truncation and run hit cost gate during corruption controls",
+      "cost_usd": 0.8797715,
+      "artifact_id": 9086092630
+    },
+    {
+      "run_id": 31450813297,
+      "classification": "validator-diagnostic run; canonical task judgments discarded before final panel selection",
+      "reason": "compact serialization succeeded, revealing GPT-5.4 qualification, Gemini Flash Lite control failure, and insufficient Claude serialization allowance",
+      "cost_usd": 0.6800873,
+      "artifact_id": 9086379138,
+      "artifact_digest": "sha256:0d303901d48c2d4ba1b064ac209f63c9a0777999bcbc4db6cbe5312c7e3b5ec4"
+    },
+    {
+      "run_id": 31451873510,
+      "classification": "control-only validator qualification",
+      "cost_usd": 0.0734769,
+      "artifact_id": 9086606344
+    },
+    {
+      "run_id": 31452167464,
+      "classification": "control-only validator qualification",
+      "cost_usd": 0.00429728,
+      "artifact_id": 9086692043
+    },
+    {
+      "run_id": 31452359042,
+      "classification": "control-only validator qualification",
+      "cost_usd": 0.0155067,
+      "artifact_id": 9086759789
+    }
+  ],
+  "validation_spend_accrued_usd": 1.65313968,
+  "final_rule": "Both qualified judges must return valid responses and vote yes on every criterion for every one of 72 tasks; both must reject every one of 12 deliberate corruption controls.",
+  "claim_boundary": "Validator qualification supports internal synthetic construct validation only and is not external domain-expert certification."
+}

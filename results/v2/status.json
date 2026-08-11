@@ -2,17 +2,18 @@
   "canonical_collection": "NOT_RUN",
   "dataset_verification": "PASS",
   "design": "complete",
-  "construct_validation": "PENDING_COMPACT_SCHEMA_RERUN",
+  "construct_validation": "PENDING_FINAL_QUALIFIED_TWO_JUDGE_RUN",
   "external_expert_validation": "NOT_USED_NO_CERTIFICATION_CLAIMED",
-  "note": "No V2 canonical model calls have been executed. V1 remains immutable. The first construct-validation attempt was a technical pilot invalidated by truncated validator tool outputs and is not used as scientific validation evidence.",
+  "note": "No V2 canonical model calls have been executed. V1 remains immutable. Validator selection used corruption controls only; failed validator candidates are excluded prospectively before the final 72-task construct-validation run.",
   "oracle_verification": "PASS",
   "paid_execution_authorized": true,
+  "validation_spend_accrued_usd": 1.65313968,
   "approved_budgets_usd": {
-    "construct_validation_cumulative_ceiling": 1.70,
-    "construct_validation_rerun_cap": 0.80,
-    "backbone": 6.50,
-    "frontier_diagnostic": 3.50,
-    "total_program_ceiling": 11.70
+    "construct_validation_cumulative_ceiling": 2.41,
+    "construct_validation_final_run_cap": 0.75,
+    "backbone": 6.00,
+    "frontier_diagnostic": 3.30,
+    "total_program_ceiling": 11.71
   },
   "provider_preflight": "PENDING_BEFORE_CANONICAL_COLLECTION"
 }
