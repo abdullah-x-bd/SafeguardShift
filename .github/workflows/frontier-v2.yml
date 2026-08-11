@@ -29,11 +29,11 @@ jobs:
           python - <<'PY'
           import os
           with open(os.environ["GITHUB_OUTPUT"],"a") as f:
-              f.write("gpt_cap=0.64\n")
-              f.write("claude_cap=1.42\n")
+              f.write("gpt_cap=0.62\n")
+              f.write("claude_cap=1.39\n")
           PY
       - name: Preflight both frontier routes
-        run: python scripts_v2/provider_preflight_frontier.py --max-cost 0.04
+        run: python scripts_v2/provider_preflight_frontier.py --max-cost 0.09
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   gpt54:
