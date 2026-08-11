@@ -1,0 +1,19 @@
+{
+  "accepted_cells": 3240,
+  "amendment": "v2/amendments/005_primary_estimand_provider_attrition.md",
+  "duplicates_excluded": 0,
+  "expected_cells": 3240,
+  "missing_by_model": {},
+  "missing_cells": 0,
+  "primary_models": [
+    "openai/gpt-4.1-mini",
+    "google/gemini-2.5-flash-lite",
+    "mistralai/mistral-small-3.2-24b-instruct"
+  ],
+  "provenance_policy": "first valid expected cell wins in explicit source-priority order; later duplicates excluded outcome-blind",
+  "source_accept_counts": {
+    "deepinfra_venice_fallback": 18,
+    "fixed_amendment009": 3222
+  },
+  "status": "PASS"
+}
