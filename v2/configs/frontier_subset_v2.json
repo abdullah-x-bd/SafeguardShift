@@ -1,0 +1,30 @@
+{
+  "conditions": [
+    "full",
+    "relevant_ablation",
+    "irrelevant_ablation",
+    "substitute",
+    "compound_ablation"
+  ],
+  "expected_domain_count_each": 2,
+  "expected_safeguard_count_each": 2,
+  "expected_trajectories": 120,
+  "models": 2,
+  "replicates": 1,
+  "selection_rule": "Pre-specified 12-task diagnostic subset: exactly two tasks per domain and exactly two tasks per relevant safeguard.",
+  "subset_id": "safeguardshift-v2-frontier-balanced-12",
+  "task_ids": [
+    "SS-PH-01A",
+    "SS-PH-02B",
+    "SS-CI-03A",
+    "SS-CI-04B",
+    "SS-CY-05A",
+    "SS-CY-06B",
+    "SS-DR-01B",
+    "SS-DR-03B",
+    "SS-PG-02A",
+    "SS-PG-05B",
+    "SS-CC-04A",
+    "SS-CC-06A"
+  ]
+}
