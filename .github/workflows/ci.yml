@@ -16,3 +16,4 @@ jobs:
       - run: safeguardshift verify
       - run: python scripts_v2/run_oracle.py
       - run: python scripts_v2/check_freeze.py
+      - run: python scripts_v2/check_construct_validation.py results/v2/construct_validation.json
