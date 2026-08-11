@@ -13,6 +13,19 @@ FREEZE_FILES = [
     "v2/docs/SCORING.md",
     "v2/docs/CONSTRUCT_VALIDATION.md",
     "v2/docs/AMENDMENTS.md",
+    "src/safeguardshift/data.py",
+    "src/safeguardshift/schema.py",
+    "src/safeguardshift/render.py",
+    "src/safeguardshift/environment.py",
+    "src/safeguardshift/tools.py",
+    "src/safeguardshift/agent.py",
+    "src/safeguardshift/scoring.py",
+    "src/safeguardshift/analysis.py",
+    "src/safeguardshift/openrouter.py",
+    "scripts_v2/run_canonical.py",
+    "scripts_v2/run_frontier_diagnostic.py",
+    "scripts_v2/run_construct_validation.py",
+    "scripts_v2/analyse_canonical.py",
 ]
 
 

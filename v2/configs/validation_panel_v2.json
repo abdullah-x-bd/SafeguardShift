@@ -23,7 +23,7 @@
       "provider": "openai",
       "max_token_field": "max_tokens",
       "temperature": null,
-      "reserve_usd": 0.02,
+      "reserve_usd": 0.006,
       "validation_max_tokens": 120,
       "qualification": {"valid_responses": 12, "detected_controls": 12, "required_detected": 8, "status": "PASS"}
     },
@@ -32,8 +32,8 @@
       "provider": "anthropic",
       "max_token_field": "max_tokens",
       "temperature": null,
-      "reserve_usd": 0.03,
-      "validation_max_tokens": 400,
+      "reserve_usd": 0.012,
+      "validation_max_tokens": 220,
       "qualification": {"valid_responses": 12, "detected_controls": 12, "required_detected": 8, "status": "PASS"}
     }
   ],
