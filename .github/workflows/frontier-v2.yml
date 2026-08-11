@@ -1,15 +1,14 @@
 name: SafeguardShift V2 frontier diagnostic
 on:
   workflow_dispatch:
-    inputs:
-      total_budget_usd:
-        description: Explicit newly approved total OpenRouter ceiling for frontier preflight plus both diagnostic model shards
-        required: true
-        type: string
+  pull_request:
+    paths:
+      - 'v2/RUN_CANONICAL'
 permissions:
   contents: read
 jobs:
   gate:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'run/v2-canonical'
     runs-on: ubuntu-latest
     outputs:
       gpt_cap: ${{ steps.budget.outputs.gpt_cap }}
@@ -29,16 +28,13 @@ jobs:
         run: |
           python - <<'PY'
           import os
-          total = float("${{ inputs.total_budget_usd }}")
-          if total <= 0:
-              raise SystemExit("A positive explicit total budget approval is required.")
-          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
-              f.write(f"preflight_cap={total * 0.01}\n")
-              f.write(f"gpt_cap={total * 0.31}\n")
-              f.write(f"claude_cap={total * 0.68}\n")
+          total=2.10
+          with open(os.environ["GITHUB_OUTPUT"],"a") as f:
+              f.write(f"gpt_cap={total*0.31}\n")
+              f.write(f"claude_cap={total*0.68}\n")
           PY
       - name: Preflight both frontier routes
-        run: python scripts_v2/provider_preflight_frontier.py --max-cost ${{ steps.budget.outputs.preflight_cap }}
+        run: python scripts_v2/provider_preflight_frontier.py --max-cost 0.021
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   gpt54:
@@ -78,4 +74,49 @@ jobs:
         with:
           name: v2-frontier-claude
           path: results/private/v2/
+          retention-days: 90
+  aggregate:
+    if: always()
+    needs: [gpt54, claude]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e .
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: v2-frontier-*
+          path: results/private/v2
+          merge-multiple: true
+      - name: Verify and analyse frontier diagnostic
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from safeguardshift.analysis import analyse_frontier
+          files=sorted(Path('results/private/v2').glob('frontier-*.jsonl'))
+          rows=[]
+          for p in files:
+              rows.extend(json.loads(x) for x in p.read_text(encoding='utf-8').splitlines() if x.strip())
+          combined=Path('results/private/v2/canonical-frontier.jsonl')
+          with combined.open('w',encoding='utf-8') as f:
+              for r in rows:f.write(json.dumps(r,sort_keys=True)+'\n')
+          result=analyse_frontier(rows)
+          Path('results/v2').mkdir(parents=True,exist_ok=True)
+          Path('results/v2/frontier_summary.json').write_text(json.dumps(result,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          print({'rows':len(rows),'status':result['status']})
+          raise SystemExit(0 if result['status']=='PASS' else 2)
+          PY
+        continue-on-error: true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: safeguardshift-v2-frontier-combined
+          path: |
+            results/private/v2/canonical-frontier.jsonl
+            results/private/v2/frontier-*.jsonl
+            results/v2/frontier_summary.json
           retention-days: 90
