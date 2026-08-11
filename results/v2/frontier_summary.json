@@ -1,0 +1,40 @@
+{
+  "by_model": {
+    "anthropic/claude-sonnet-5": {
+      "selective_adaptation_bootstrap95": [
+        0.0,
+        0.0
+      ],
+      "selective_adaptation_mean": 0.0,
+      "substitute_use_rate": 0.0,
+      "substitution_utility_gain_mean": 0.0,
+      "terminal_compliance_rate": 1.0
+    },
+    "openai/gpt-5.4": {
+      "selective_adaptation_bootstrap95": [
+        -0.3333333333333333,
+        0.4166666666666667
+      ],
+      "selective_adaptation_mean": 0.0,
+      "substitute_use_rate": 0.0,
+      "substitution_utility_gain_mean": -0.028985507246376812,
+      "terminal_compliance_rate": 1.0
+    }
+  },
+  "completeness": {
+    "duplicates": 0,
+    "missing_count": 0,
+    "missing_examples": [],
+    "models": 2,
+    "replicates": [
+      1
+    ],
+    "rows": 60,
+    "status": "PASS",
+    "tasks": 6,
+    "unexpected_count": 0,
+    "unexpected_examples": [],
+    "unique_cells": 60
+  },
+  "status": "PASS"
+}
