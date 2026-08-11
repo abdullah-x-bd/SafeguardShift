@@ -1,19 +1,19 @@
 {
   "canonical_collection": "NOT_RUN",
   "dataset_verification": "PASS",
-  "design": "repaired_precanonical",
-  "construct_validation": "PENDING_REPAIRED_FROM_SCRATCH_RUN",
+  "design": "final_precannonical_cue_repair",
+  "construct_validation": "PENDING_FINAL_COMPLETE_RUN",
   "external_expert_validation": "NOT_USED_NO_CERTIFICATION_CLAIMED",
-  "note": "No V2 canonical model calls have been executed. The first qualified two-judge run exposed a global negative-control and visible-cue flaw; the construct was repaired globally with no task deletion and no threshold relaxation. V1 remains immutable.",
-  "oracle_verification": "REQUIRES_POST_REPAIR_CI_CONFIRMATION",
+  "note": "No V2 canonical model calls have been executed. The repaired validation collected 137/168 rows before its $0.60 cost gate stopped it; only one negative judgment was observed, a cue-leakage flag on SS-DR-02B. Agent-visible target labels and system instructions were neutralized globally before canonical collection, and the non-powered frontier diagnostic was prospectively reduced to six balanced tasks to preserve the powered backbone under the fixed $12 authorization. V1 remains immutable.",
+  "oracle_verification": "PASS_PRE_FINAL_CUE_REPAIR_REQUIRES_CI_RECHECK",
   "paid_execution_authorized": true,
-  "validation_spend_accrued_usd": 2.37762468,
+  "validation_spend_accrued_usd": 2.96797018,
   "approved_budgets_usd": {
-    "construct_validation_cumulative_ceiling": 2.98,
-    "construct_validation_repaired_run_cap": 0.60,
-    "backbone": 5.75,
-    "frontier_diagnostic": 3.25,
-    "total_program_ceiling": 11.98
+    "construct_validation_cumulative_ceiling": 3.76797018,
+    "construct_validation_final_run_cap": 0.80,
+    "backbone": 5.90,
+    "frontier_diagnostic": 2.10,
+    "total_program_ceiling": 11.76797018
   },
   "provider_preflight": "PENDING_BEFORE_CANONICAL_COLLECTION"
 }
