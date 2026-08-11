@@ -18,6 +18,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--cells", required=True)
     ap.add_argument("--model-index", type=int, required=True, choices=(0, 1, 3))
+    ap.add_argument("--task-prefix")
     ap.add_argument("--max-cost", type=float, required=True)
     ap.add_argument("--output", required=True)
     args = ap.parse_args()
@@ -27,6 +28,8 @@ def main() -> None:
     spec = ModelSpec(model["id"], model["provider"], model["max_token_field"], model["temperature"], RESERVES[args.model_index])
     tasks = {t.task_id: t for t in load_tasks()}
     requested = [c for c in json.loads(Path(args.cells).read_text(encoding="utf-8")) if int(c["model_index"]) == args.model_index]
+    if args.task_prefix:
+        requested = [c for c in requested if str(c["task_id"]).startswith(args.task_prefix)]
     gate = CostGate(args.max_cost)
     client = Client(gate=gate, retries=4)
     out = Path(args.output)
@@ -42,7 +45,7 @@ def main() -> None:
             fh.write(json.dumps(rec, sort_keys=True) + "\n")
             fh.flush()
             completed += 1
-    print(json.dumps({"status": "PASS", "model": spec.id, "requested": len(requested), "completed": completed, "cost_usd": gate.spent_usd}, sort_keys=True))
+    print(json.dumps({"status": "PASS", "model": spec.id, "task_prefix": args.task_prefix, "requested": len(requested), "completed": completed, "cost_usd": gate.spent_usd}, sort_keys=True))
 
 
 if __name__ == "__main__":
