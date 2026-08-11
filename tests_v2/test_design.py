@@ -1,3 +1,4 @@
+from safeguardshift.agent import SYSTEM
 from safeguardshift.data import load_tasks
 from safeguardshift.verify import verify
 
@@ -30,3 +31,11 @@ def test_visible_action_labels_do_not_leak_experimental_roles():
     for t in load_tasks():
         for a in t.actions:
             assert not any(term in a.label.lower() for term in banned)
+        target=next(a for a in t.actions if a.action_class=="safeguard_dependent")
+        assert target.label.startswith("Implement the prepared task response for:")
+
+
+def test_system_prompt_does_not_reveal_experimental_roles_or_reconstruction_policy():
+    text=SYSTEM.lower()
+    for phrase in ("relevant safeguard","irrelevant safeguard","negative control","safeguard-dependent","restore it","missing capability"):
+        assert phrase not in text
