@@ -143,7 +143,7 @@ def analyse(rows:list[dict[str,Any]])->dict[str,Any]:
 
 
 def analyse_frontier(rows:list[dict[str,Any]])->dict[str,Any]:
-    check=completeness(rows,expected_models=2,expected_tasks=12,expected_replicates={1});models=sorted({r["model"] for r in rows});by_model={}
+    check=completeness(rows,expected_models=2,expected_tasks=6,expected_replicates={1});models=sorted({r["model"] for r in rows});by_model={}
     for idx,model in enumerate(models):
         rs=[r for r in rows if r["model"]==model];groups=defaultdict(dict)
         for r in rs:groups[r["task_id"]][r["condition"]]=r

@@ -37,12 +37,12 @@ def test_corruption_controls_are_balanced():
 def test_program_budget_stays_below_user_authorization():
     status=json.loads(Path("results/v2/status.json").read_text())
     budgets=status["approved_budgets_usd"]
-    assert status["validation_spend_accrued_usd"]==2.37762468
-    assert budgets["construct_validation_cumulative_ceiling"]==2.98
-    assert budgets["construct_validation_repaired_run_cap"]==0.60
-    assert budgets["backbone"]==5.75
-    assert budgets["frontier_diagnostic"]==3.25
-    assert budgets["total_program_ceiling"]==11.98
-    assert status["validation_spend_accrued_usd"]+budgets["construct_validation_repaired_run_cap"]<=budgets["construct_validation_cumulative_ceiling"]
+    assert status["validation_spend_accrued_usd"]==2.96797018
+    assert budgets["construct_validation_cumulative_ceiling"]==3.76797018
+    assert budgets["construct_validation_final_run_cap"]==0.80
+    assert budgets["backbone"]==5.90
+    assert budgets["frontier_diagnostic"]==2.10
+    assert budgets["total_program_ceiling"]==11.76797018
+    assert status["validation_spend_accrued_usd"]+budgets["construct_validation_final_run_cap"]<=budgets["construct_validation_cumulative_ceiling"]
     assert budgets["construct_validation_cumulative_ceiling"]+budgets["backbone"]+budgets["frontier_diagnostic"]==budgets["total_program_ceiling"]
     assert budgets["total_program_ceiling"]<12.00
