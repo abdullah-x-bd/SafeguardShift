@@ -45,17 +45,18 @@ jobs:
           }
           wait_for_artifacts 31456685835 72 original
           wait_for_artifacts 31459468529 6 gemini_recovery
-          wait_for_artifacts 31459468549 6 deepseek_recovery
+          wait_for_artifacts 31461817984 6 deepseek_robust
           wait_for_artifacts 31460302065 6 mistral_recovery
           wait_for_artifacts 31456858244 3 frontier_recovery
       - name: Download designated source artifacts
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p incoming/original incoming/gemini incoming/deepseek incoming/mistral incoming/frontier
+          mkdir -p incoming/original incoming/gemini incoming/deepseek_old incoming/deepseek_robust incoming/mistral incoming/frontier
           gh run download 31456685835 --dir incoming/original
           gh run download 31459468529 --dir incoming/gemini
-          gh run download 31459468549 --dir incoming/deepseek
+          gh run download 31459468549 --dir incoming/deepseek_old || true
+          gh run download 31461817984 --dir incoming/deepseek_robust
           gh run download 31460302065 --dir incoming/mistral
           gh run download 31456858244 -n safeguardshift-v2-frontier-combined --dir incoming/frontier
           frontier=$(find incoming/frontier -type f -name 'canonical-frontier.jsonl' | head -n 1)
@@ -67,7 +68,8 @@ jobs:
           python scripts_v2/assemble_v2.py \
             --source original=incoming/original \
             --source gemini_recovery=incoming/gemini \
-            --source deepseek_recovery=incoming/deepseek \
+            --source deepseek_first_recovery=incoming/deepseek_old \
+            --source deepseek_robust=incoming/deepseek_robust \
             --source mistral_recovery=incoming/mistral \
             --output results/private/v2/canonical-backbone-pre-final.jsonl \
             --missing-output results/private/v2/missing-before-final.json \
@@ -77,13 +79,13 @@ jobs:
         run: python scripts_v2/run_final_missing.py --cells results/private/v2/missing-before-final.json --model-index 0 --max-cost 0.04 --output results/private/v2/final-recovery-gpt41.jsonl
       - name: Recover exact Mistral missing cells
         continue-on-error: true
-        run: python scripts_v2/run_final_missing.py --cells results/private/v2/missing-before-final.json --model-index 3 --max-cost 0.22 --output results/private/v2/final-recovery-mistral.jsonl
-      - name: Recover exact Gemini missing cells
+        run: python scripts_v2/run_final_missing.py --cells results/private/v2/missing-before-final.json --model-index 3 --max-cost 0.42 --output results/private/v2/final-recovery-mistral.jsonl
+      - name: Assert Gemini recovery is already complete
         continue-on-error: true
-        run: python scripts_v2/run_final_missing.py --cells results/private/v2/missing-before-final.json --model-index 1 --max-cost 0.01 --output results/private/v2/final-recovery-gemini.jsonl
-      - name: Recover exact DeepSeek missing cells with malformed-provider retry
+        run: python scripts_v2/run_final_missing.py --cells results/private/v2/missing-before-final.json --model-index 1 --max-cost 0.0 --output results/private/v2/final-recovery-gemini.jsonl
+      - name: Recover only residual DeepSeek edge cases
         continue-on-error: true
-        run: python scripts_v2/run_final_missing.py --cells results/private/v2/missing-before-final.json --model-index 2 --max-cost 0.33 --empty-retries 8 --output results/private/v2/final-recovery-deepseek.jsonl
+        run: python scripts_v2/run_final_missing.py --cells results/private/v2/missing-before-final.json --model-index 2 --max-cost 0.04 --empty-retries 8 --output results/private/v2/final-recovery-deepseek.jsonl
       - name: Assemble final backbone
         run: |
           mkdir -p incoming/final
@@ -91,7 +93,8 @@ jobs:
           python scripts_v2/assemble_v2.py \
             --source original=incoming/original \
             --source gemini_recovery=incoming/gemini \
-            --source deepseek_recovery=incoming/deepseek \
+            --source deepseek_first_recovery=incoming/deepseek_old \
+            --source deepseek_robust=incoming/deepseek_robust \
             --source mistral_recovery=incoming/mistral \
             --source final_exact_recovery=incoming/final \
             --output results/private/v2/canonical-backbone.jsonl \
@@ -111,14 +114,14 @@ jobs:
         shell: bash
         run: |
           python - <<'PY'
-          import hashlib,json,os
+          import hashlib,json
           from pathlib import Path
           paths=['results/private/v2/canonical-backbone.jsonl','results/private/v2/canonical-frontier.jsonl','results/v2/canonical_verification.json','results/v2/backbone_summary.json','results/v2/frontier_summary.json','results/private/v2/missing-before-final.json','results/private/v2/missing-after-final.json']
           files={}
           for name in paths:
               p=Path(name)
               if p.exists(): files[name]={'sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'bytes':p.stat().st_size}
-          payload={'protocol':'safeguardshift-v2.0.0','source_runs':{'original':31456685835,'gemini_recovery':31459468529,'deepseek_recovery':31459468549,'mistral_recovery':31460302065,'frontier':31456858244},'acceptance_policy':'first valid expected cell wins by fixed source priority; recoveries fill only previously missing cells','final_recovery_caps_usd':{'gpt41':0.04,'gemini':0.01,'deepseek':0.33,'mistral':0.22,'total':0.60},'provider_empty_choices_policy':'retry identical request only when HTTP-success provider payload has no choices','files':files}
+          payload={'protocol':'safeguardshift-v2.0.0','source_runs':{'original':31456685835,'gemini_recovery':31459468529,'deepseek_first_recovery':31459468549,'deepseek_robust':31461817984,'mistral_recovery':31460302065,'frontier':31456858244},'acceptance_policy':'first valid expected cell wins by fixed source priority; later duplicates excluded outcome-blind','final_recovery_caps_usd':{'gpt41':0.04,'gemini':0.0,'deepseek':0.04,'mistral':0.42,'total':0.50},'provider_empty_choices_policy':'retry identical request only when HTTP-success provider payload has no choices','files':files}
           Path('results/v2/final_provenance.json').write_text(json.dumps(payload,indent=2,sort_keys=True)+'\n')
           PY
       - uses: actions/upload-artifact@v4
