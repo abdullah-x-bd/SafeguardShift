@@ -2,16 +2,17 @@
   "canonical_collection": "NOT_RUN",
   "dataset_verification": "PASS",
   "design": "complete",
-  "construct_validation": "PENDING_TRIANGULATED_SYNTHETIC_PANEL",
+  "construct_validation": "PENDING_COMPACT_SCHEMA_RERUN",
   "external_expert_validation": "NOT_USED_NO_CERTIFICATION_CLAIMED",
-  "note": "No V2 canonical model calls have been executed. V1 remains immutable. V2 is explicitly a controlled synthetic benchmark.",
+  "note": "No V2 canonical model calls have been executed. V1 remains immutable. The first construct-validation attempt was a technical pilot invalidated by truncated validator tool outputs and is not used as scientific validation evidence.",
   "oracle_verification": "PASS",
   "paid_execution_authorized": true,
   "approved_budgets_usd": {
-    "construct_validation": 0.90,
-    "backbone": 7.00,
-    "frontier_diagnostic": 4.00,
-    "total": 11.90
+    "construct_validation_cumulative_ceiling": 1.70,
+    "construct_validation_rerun_cap": 0.80,
+    "backbone": 6.50,
+    "frontier_diagnostic": 3.50,
+    "total_program_ceiling": 11.70
   },
   "provider_preflight": "PENDING_BEFORE_CANONICAL_COLLECTION"
 }
