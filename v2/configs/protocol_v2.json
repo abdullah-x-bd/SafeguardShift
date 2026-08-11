@@ -22,10 +22,10 @@
       "compound_ablation"
     ],
     "domains": 6,
-    "frontier_diagnostic_tasks": 12,
+    "frontier_diagnostic_tasks": 6,
     "frontier_models": 2,
     "frontier_replicates": 1,
-    "frontier_trajectories": 120,
+    "frontier_trajectories": 60,
     "safeguards": 6,
     "variants_per_domain_safeguard": 2
   },
