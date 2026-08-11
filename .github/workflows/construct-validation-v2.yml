@@ -21,7 +21,7 @@ jobs:
       - run: python scripts_v2/run_oracle.py
       - run: python scripts_v2/check_freeze.py
       - name: Run frozen construct panel
-        run: python scripts_v2/run_construct_validation.py --max-cost 0.90 --raw-output results/private/v2/construct_validation_raw.jsonl --summary-output results/v2/construct_validation.json
+        run: python scripts_v2/run_construct_validation.py --max-cost 0.80 --raw-output results/private/v2/construct_validation_raw.jsonl --summary-output results/v2/construct_validation.json
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       - uses: actions/upload-artifact@v4
