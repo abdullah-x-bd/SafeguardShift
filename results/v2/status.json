@@ -1,0 +1,10 @@
+{
+  "canonical_collection": "NOT_RUN",
+  "dataset_verification": "PASS",
+  "design": "complete",
+  "expert_validation": "PENDING_EXTERNAL_HUMAN_REVIEW",
+  "note": "No V2 model calls have been executed. V1 remains immutable.",
+  "oracle_verification": "PASS",
+  "paid_execution_authorized": false,
+  "provider_preflight": "PENDING_BEFORE_CANONICAL_COLLECTION"
+}

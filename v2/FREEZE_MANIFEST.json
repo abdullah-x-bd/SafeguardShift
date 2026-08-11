@@ -1,0 +1,14 @@
+{
+  "files": {
+    "v2/configs/analysis_v2.json": "a126050c7c70be69a0dd72ea4c7ae3419cf946abe5a88a55e05307e2205282b6",
+    "v2/configs/model_panel_v2.json": "2a254cf0cb1bf58de83aa401faf6f196594622e13be71712023acb9c9f2d1763",
+    "v2/configs/protocol_v2.json": "a6e2fd2a27f66693b44740727f3cfe1e8d88332e4ff865c20f7713b96c20eedf",
+    "v2/data/base_tasks_manifest.json": "df18db399d9efd15629fd2106d1288d444b0b379e967abb659be3ebe5f8b4d28",
+    "v2/docs/HYPOTHESES.md": "fca5559c7d55b435101c31ef8bca31295e52e0fd5a24dce10af79d5a5c903357",
+    "v2/docs/SCORING.md": "08d5e4473c54a1127fbc355a3f4d5dfa9efd34dab2023fab3fa91f5c1249788e"
+  },
+  "frozen_on": "2026-08-11",
+  "protocol": "safeguardshift-v2.0.0",
+  "status": "DESIGN_FROZEN_PRECANONICAL_EXTERNAL_REVIEW_PENDING",
+  "v1_parent_commit": "f4bfb19eadf68b15a3bd380992d70496df6ac258"
+}

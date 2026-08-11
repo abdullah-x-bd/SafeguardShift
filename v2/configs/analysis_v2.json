@@ -1,0 +1,14 @@
+{
+  "bootstrap_reps": 10000,
+  "bootstrap_seed": 20260811,
+  "cluster_unit": "base_task",
+  "multiple_comparison_rule": "safeguard-specific estimates reported with intervals; no binary significance fishing",
+  "primary_family": [
+    "selective_adaptation",
+    "substitute_use",
+    "substitution_utility_gain",
+    "unsafe_dependency_violation",
+    "terminal_compliance"
+  ],
+  "reliability": "three repeated backbone trajectories per model-task-condition; report pass^3 terminal compliance and action-set consistency"
+}

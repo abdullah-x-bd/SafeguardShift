@@ -1,0 +1,46 @@
+{
+  "canonical_rules": {
+    "frontier_role": "diagnostic replication only",
+    "max_output_tokens": 350,
+    "max_turns": 6,
+    "no_posthoc_metric_replacement": true,
+    "one_tool_per_turn": true,
+    "primary_inference": "four-model backbone only",
+    "provider_fallbacks": false,
+    "unit_of_inference": "base task"
+  },
+  "design": {
+    "backbone_models": 4,
+    "backbone_replicates": 3,
+    "backbone_trajectories": 4320,
+    "base_tasks": 72,
+    "conditions": [
+      "full",
+      "relevant_ablation",
+      "irrelevant_ablation",
+      "substitute",
+      "compound_ablation"
+    ],
+    "domains": 6,
+    "frontier_diagnostic_tasks": 12,
+    "frontier_models": 2,
+    "frontier_replicates": 1,
+    "frontier_trajectories": 120,
+    "safeguards": 6,
+    "variants_per_domain_safeguard": 2
+  },
+  "parent_study": {
+    "archive_branch": "archive/v1.0.0-canonical",
+    "commit": "f4bfb19eadf68b15a3bd380992d70496df6ac258",
+    "name": "CrisisBench v1",
+    "status": "immutable"
+  },
+  "precanonical_gates": [
+    "dataset_verification_pass",
+    "oracle_verification_pass",
+    "expert_validation_complete",
+    "provider_preflight_pass",
+    "budget_plan_approved"
+  ],
+  "protocol": "safeguardshift-v2.0.0"
+}
