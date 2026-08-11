@@ -12,8 +12,9 @@ CONDITIONS={"full","relevant_ablation","irrelevant_ablation","substitute","compo
 RESERVES={0:0.0005,1:0.0002,2:0.0002,3:0.0001}
 
 def main()->None:
-    ap=argparse.ArgumentParser();ap.add_argument("--cells",required=True);ap.add_argument("--max-cost",type=float,required=True);ap.add_argument("--output",required=True);a=ap.parse_args()
-    cells=json.loads(Path(a.cells).read_text(encoding="utf-8"));panel=json.loads(Path("v2/configs/model_panel_v2.json").read_text(encoding="utf-8"))["backbone"];tasks={t.task_id:t for t in load_tasks()}
+    ap=argparse.ArgumentParser();ap.add_argument("--cells",required=True);ap.add_argument("--domain");ap.add_argument("--max-cost",type=float,required=True);ap.add_argument("--output",required=True);a=ap.parse_args()
+    all_cells=json.loads(Path(a.cells).read_text(encoding="utf-8"));panel=json.loads(Path("v2/configs/model_panel_v2.json").read_text(encoding="utf-8"))["backbone"];tasks={t.task_id:t for t in load_tasks()}
+    cells=[c for c in all_cells if not a.domain or tasks[str(c["task_id"])].domain==a.domain]
     gate=CostGate(a.max_cost);out=Path(a.output);out.parent.mkdir(parents=True,exist_ok=True);written=[]
     with out.open("w",encoding="utf-8") as fh:
         for cell in cells:
