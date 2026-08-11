@@ -1,19 +1,19 @@
 {
   "canonical_collection": "NOT_RUN",
   "dataset_verification": "PASS",
-  "design": "complete",
-  "construct_validation": "PENDING_FINAL_QUALIFIED_TWO_JUDGE_RUN",
+  "design": "repaired_precanonical",
+  "construct_validation": "PENDING_REPAIRED_FROM_SCRATCH_RUN",
   "external_expert_validation": "NOT_USED_NO_CERTIFICATION_CLAIMED",
-  "note": "No V2 canonical model calls have been executed. V1 remains immutable. Validator selection used corruption controls only; failed validator candidates are excluded prospectively before the final 72-task construct-validation run.",
-  "oracle_verification": "PASS",
+  "note": "No V2 canonical model calls have been executed. The first qualified two-judge run exposed a global negative-control and visible-cue flaw; the construct was repaired globally with no task deletion and no threshold relaxation. V1 remains immutable.",
+  "oracle_verification": "REQUIRES_POST_REPAIR_CI_CONFIRMATION",
   "paid_execution_authorized": true,
-  "validation_spend_accrued_usd": 1.65313968,
+  "validation_spend_accrued_usd": 2.37762468,
   "approved_budgets_usd": {
-    "construct_validation_cumulative_ceiling": 2.41,
-    "construct_validation_final_run_cap": 0.75,
-    "backbone": 6.00,
-    "frontier_diagnostic": 3.30,
-    "total_program_ceiling": 11.71
+    "construct_validation_cumulative_ceiling": 2.98,
+    "construct_validation_repaired_run_cap": 0.60,
+    "backbone": 5.75,
+    "frontier_diagnostic": 3.25,
+    "total_program_ceiling": 11.98
   },
   "provider_preflight": "PENDING_BEFORE_CANONICAL_COLLECTION"
 }
