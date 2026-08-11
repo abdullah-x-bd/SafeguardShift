@@ -1,0 +1,170 @@
+name: SafeguardShift V2 amended three-model finalization
+on:
+  pull_request:
+    paths:
+      - 'v2/RUN_PRIMARY3_FINALIZE'
+permissions:
+  contents: read
+  actions: write
+jobs:
+  finalize:
+    if: github.head_ref == 'run/v2-primary-3model-finalize'
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      GH_TOKEN: ${{ github.token }}
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+    steps:
+      - name: Cancel superseded DeepSeek and four-model finalizer
+        shell: bash
+        run: |
+          set +e
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/actions/runs/31461817984/cancel"
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/actions/runs/31461922867/cancel"
+          exit 0
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e .
+      - run: safeguardshift verify
+      - run: python scripts_v2/run_oracle.py
+      - run: python scripts_v2/check_freeze.py
+      - run: python scripts_v2/check_construct_validation.py results/v2/construct_validation.json
+      - name: Wait for complete stable-model source artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          wait_for_artifacts() {
+            local run_id="$1" minimum="$2" label="$3"
+            for i in $(seq 1 120); do
+              count=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts?per_page=100" --jq '.total_count')
+              echo "$label artifacts: $count / >=$minimum"
+              if [ "$count" -ge "$minimum" ]; then return 0; fi
+              sleep 15
+            done
+            echo "Timed out waiting for $label artifacts" >&2
+            return 1
+          }
+          wait_for_artifacts 31456685835 72 original
+          wait_for_artifacts 31459468529 6 gemini_recovery
+          wait_for_artifacts 31460302065 6 mistral_recovery
+          wait_for_artifacts 31456858244 3 frontier
+      - name: Download fixed source artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p incoming/original incoming/gemini incoming/mistral incoming/frontier incoming/deepseek_old incoming/deepseek_robust
+          gh run download 31456685835 --dir incoming/original
+          gh run download 31459468529 --dir incoming/gemini
+          gh run download 31460302065 --dir incoming/mistral
+          gh run download 31456858244 -n safeguardshift-v2-frontier-combined --dir incoming/frontier
+          gh run download 31459468549 --dir incoming/deepseek_old || true
+          gh run download 31461817984 --dir incoming/deepseek_robust || true
+          frontier=$(find incoming/frontier -type f -name 'canonical-frontier.jsonl' | head -n 1)
+          test -n "$frontier"
+          mkdir -p results/private/v2
+          cp "$frontier" results/private/v2/canonical-frontier.jsonl
+      - name: Assemble amended primary before exact recovery
+        run: |
+          python scripts_v2/assemble_primary3.py \
+            --source original=incoming/original \
+            --source gemini_recovery=incoming/gemini \
+            --source mistral_recovery=incoming/mistral \
+            --output results/private/v2/primary3-pre-final.jsonl \
+            --missing-output results/private/v2/primary3-missing-before-final.json \
+            --report-output results/private/v2/primary3-assembly-before-final.json
+      - name: Recover exact GPT-4.1 residual cells
+        continue-on-error: true
+        run: python scripts_v2/run_primary_missing.py --cells results/private/v2/primary3-missing-before-final.json --model-index 0 --max-cost 0.04 --output results/private/v2/primary3-recovery-gpt41.jsonl
+      - name: Recover exact Gemini residual cells
+        continue-on-error: true
+        run: python scripts_v2/run_primary_missing.py --cells results/private/v2/primary3-missing-before-final.json --model-index 1 --max-cost 0.01 --output results/private/v2/primary3-recovery-gemini.jsonl
+      - name: Recover exact Mistral residual cells
+        continue-on-error: true
+        run: python scripts_v2/run_primary_missing.py --cells results/private/v2/primary3-missing-before-final.json --model-index 3 --max-cost 0.40 --output results/private/v2/primary3-recovery-mistral.jsonl
+      - name: Assemble final 3,240-cell primary matrix
+        shell: bash
+        run: |
+          mkdir -p incoming/final
+          cp results/private/v2/primary3-recovery-*.jsonl incoming/final/ 2>/dev/null || true
+          python scripts_v2/assemble_primary3.py \
+            --source original=incoming/original \
+            --source gemini_recovery=incoming/gemini \
+            --source mistral_recovery=incoming/mistral \
+            --source final_exact_recovery=incoming/final \
+            --output results/private/v2/canonical-primary3.jsonl \
+            --missing-output results/private/v2/primary3-missing-after-final.json \
+            --report-output results/v2/primary3_canonical_verification.json
+          python - <<'PY'
+          import json
+          r=json.load(open('results/v2/primary3_canonical_verification.json'))
+          if r['accepted_cells'] != 3240 or r['missing_cells'] != 0:
+              raise SystemExit(f"primary matrix incomplete: {r}")
+          print('PRIMARY BACKBONE 3240/3240 PASS')
+          PY
+      - name: Assemble preserved DeepSeek provider diagnostic
+        run: |
+          python scripts_v2/assemble_deepseek_diagnostic.py \
+            --source original=incoming/original \
+            --source first_recovery=incoming/deepseek_old \
+            --source robust_recovery=incoming/deepseek_robust \
+            --output results/private/v2/deepseek-provider-diagnostic.jsonl \
+            --report-output results/v2/deepseek_provider_diagnostic.json
+      - name: Run amended primary and unchanged frontier analysis
+        run: |
+          python scripts_v2/analyse_primary3.py \
+            --backbone-glob results/private/v2/canonical-primary3.jsonl \
+            --frontier-glob results/private/v2/canonical-frontier.jsonl \
+            --backbone-output results/v2/primary3_summary.json \
+            --frontier-output results/v2/frontier_summary.json
+      - name: Record final amended provenance
+        if: always()
+        shell: bash
+        run: |
+          python - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          names=[
+            'results/private/v2/canonical-primary3.jsonl',
+            'results/private/v2/canonical-frontier.jsonl',
+            'results/private/v2/deepseek-provider-diagnostic.jsonl',
+            'results/v2/primary3_canonical_verification.json',
+            'results/v2/primary3_summary.json',
+            'results/v2/frontier_summary.json',
+            'results/v2/deepseek_provider_diagnostic.json',
+            'v2/amendments/005_primary_estimand_provider_attrition.md'
+          ]
+          files={}
+          for name in names:
+              p=Path(name)
+              if p.exists(): files[name]={'sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'bytes':p.stat().st_size}
+          payload={
+            'protocol':'safeguardshift-v2.0.0',
+            'primary_estimand':'3 complete backbone models x 72 tasks x 5 conditions x 3 replicates = 3240 cells',
+            'primary_models':['openai/gpt-4.1-mini','google/gemini-2.5-flash-lite','mistralai/mistral-small-3.2-24b-instruct'],
+            'deepseek_role':'provider/interface reliability diagnostic only; not pooled into primary behavioral estimand',
+            'amendment':'v2/amendments/005_primary_estimand_provider_attrition.md',
+            'source_runs':{'original':31456685835,'gemini_recovery':31459468529,'mistral_recovery':31460302065,'deepseek_first_recovery':31459468549,'deepseek_robust_partial':31461817984,'frontier':31456858244},
+            'acceptance_policy':'first valid expected cell wins in fixed source-priority order; later duplicates excluded without inspecting outcomes',
+            'new_exact_recovery_caps_usd':{'gpt41':0.04,'gemini':0.01,'mistral':0.40,'total':0.45},
+            'files':files
+          }
+          Path('results/v2/primary3_final_provenance.json').write_text(json.dumps(payload,indent=2,sort_keys=True)+'\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: safeguardshift-v2-primary3-final-evidence
+          path: |
+            results/private/v2/canonical-primary3.jsonl
+            results/private/v2/canonical-frontier.jsonl
+            results/private/v2/deepseek-provider-diagnostic.jsonl
+            results/private/v2/primary3-*.json
+            results/v2/primary3_canonical_verification.json
+            results/v2/primary3_summary.json
+            results/v2/frontier_summary.json
+            results/v2/deepseek_provider_diagnostic.json
+            results/v2/primary3_final_provenance.json
+            v2/amendments/005_primary_estimand_provider_attrition.md
+          retention-days: 90
