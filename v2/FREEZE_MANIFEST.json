@@ -6,13 +6,13 @@
     "v2/configs/protocol_v2.json": "5c906a2f0f449852d3845a42d2077a492e01c7ea81c24a0a0b809dbba66aec79",
     "v2/configs/validation_panel_v2.json": "57712da86d2d4edfcacc99555dde47b912fa1979c7357068fcbdb9618f8c37b3",
     "v2/data/base_tasks_manifest.json": "df18db399d9efd15629fd2106d1288d444b0b379e967abb659be3ebe5f8b4d28",
-    "v2/docs/AMENDMENTS.md": "85d8b72b0df678ec25d36a8d97f081f386ee517b73dd2ce26486969a9c94b888",
+    "v2/docs/AMENDMENTS.md": "2d7c1cdc6c709f36d7839ce6c5d21286a0f092bb27733af71755b8c28fa9fa26",
     "v2/docs/CONSTRUCT_VALIDATION.md": "b0fd2b979526011458b76daf7d9f4bf76b784ee62a1bbecc350aaf54ac7afe6e",
     "v2/docs/HYPOTHESES.md": "fca5559c7d55b435101c31ef8bca31295e52e0fd5a24dce10af79d5a5c903357",
     "v2/docs/SCORING.md": "08d5e4473c54a1127fbc355a3f4d5dfa9efd34dab2023fab3fa91f5c1249788e"
   },
   "frozen_on": "2026-08-11",
   "protocol": "safeguardshift-v2.0.0",
-  "status": "DESIGN_FROZEN_PRECANONICAL_SYNTHETIC_VALIDATION_PENDING",
+  "status": "DESIGN_FROZEN_PRECANONICAL_SYNTHETIC_VALIDATION_RERUN_PENDING",
   "v1_parent_commit": "f4bfb19eadf68b15a3bd380992d70496df6ac258"
 }
