@@ -1,0 +1,419 @@
+name: SafeguardShift V2 final cell-local residual completion
+on:
+  pull_request:
+    paths:
+      - 'v2/RUN_PRIMARY3_RESIDUAL_PASS2'
+permissions:
+  contents: read
+  actions: read
+
+env:
+  BASELINE_ARTIFACT_ID: '9094231308'
+
+jobs:
+  recover-pass1:
+    if: github.head_ref == 'run/v2-primary-3model-finalize'
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        include:
+          - shard: ci
+            task_prefix: 'SS-CI-'
+            max_cost: '0.30'
+          - shard: dr
+            task_prefix: 'SS-DR-'
+            max_cost: '0.28'
+          - shard: cy
+            task_prefix: 'SS-CY-'
+            max_cost: '0.26'
+          - shard: cc
+            task_prefix: 'SS-CC-'
+            max_cost: '0.16'
+          - shard: ph
+            task_prefix: 'SS-PH-'
+            max_cost: '0.15'
+          - shard: pg
+            task_prefix: 'SS-PG-'
+            max_cost: '0.08'
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      GH_TOKEN: ${{ github.token }}
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e .
+      - run: python scripts_v2/check_freeze.py
+      - run: python scripts_v2/check_construct_validation.py results/v2/construct_validation.json
+      - name: Download fixed 3,059-cell baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p prior
+          curl -fsSL -H "Authorization: Bearer ${GH_TOKEN}" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${BASELINE_ARTIFACT_ID}/zip" -o /tmp/baseline.zip
+          unzip -q /tmp/baseline.zip -d prior
+          test -f prior/private/v2/canonical-primary3.jsonl
+          test -f prior/private/v2/primary3-missing-final.json
+          python - <<'PY'
+          import json
+          rows=json.load(open('prior/private/v2/primary3-missing-final.json'))
+          assert len(rows)==181, len(rows)
+          assert all(r['model']=='mistralai/mistral-small-3.2-24b-instruct' for r in rows)
+          print('BASELINE 3059 / RESIDUAL 181 PASS')
+          PY
+      - name: Recover pass 1 exact missing cells
+        run: |
+          python scripts_v2/run_primary_missing.py \
+            --cells prior/private/v2/primary3-missing-final.json \
+            --model-index 3 \
+            --task-prefix '${{ matrix.task_prefix }}' \
+            --max-cost ${{ matrix.max_cost }} \
+            --output results/private/v2/p1-${{ matrix.shard }}.jsonl \
+            --failure-output results/private/v2/p1-${{ matrix.shard }}-failures.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: primary3-p1-${{ matrix.shard }}
+          path: |
+            results/private/v2/p1-${{ matrix.shard }}.jsonl
+            results/private/v2/p1-${{ matrix.shard }}-failures.json
+          if-no-files-found: warn
+          retention-days: 90
+
+  assemble-pass1:
+    if: always()
+    needs: recover-pass1
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e .
+      - name: Download 3,059 baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p incoming/base
+          curl -fsSL -H "Authorization: Bearer ${GH_TOKEN}" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${BASELINE_ARTIFACT_ID}/zip" -o /tmp/baseline.zip
+          unzip -q /tmp/baseline.zip -d incoming/base
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: primary3-p1-*
+          path: incoming/p1
+          merge-multiple: true
+      - name: Assemble pass 1
+        run: |
+          python scripts_v2/assemble_primary3.py \
+            --source accepted_baseline=incoming/base \
+            --source cell_local_pass1=incoming/p1 \
+            --output stage1/private/v2/canonical-primary3.jsonl \
+            --missing-output stage1/private/v2/primary3-missing.json \
+            --report-output stage1/v2/primary3_canonical_verification.json
+          python - <<'PY'
+          import json
+          r=json.load(open('stage1/v2/primary3_canonical_verification.json'))
+          assert r['accepted_cells'] >= 3059, r
+          print('PASS1', r['accepted_cells'], 'accepted,', r['missing_cells'], 'missing')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: primary3-pass1-baseline
+          path: stage1/
+          retention-days: 90
+
+  recover-pass2:
+    needs: assemble-pass1
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        include:
+          - shard: ci
+            task_prefix: 'SS-CI-'
+            max_cost: '0.16'
+          - shard: dr
+            task_prefix: 'SS-DR-'
+            max_cost: '0.15'
+          - shard: cy
+            task_prefix: 'SS-CY-'
+            max_cost: '0.14'
+          - shard: cc
+            task_prefix: 'SS-CC-'
+            max_cost: '0.10'
+          - shard: ph
+            task_prefix: 'SS-PH-'
+            max_cost: '0.10'
+          - shard: pg
+            task_prefix: 'SS-PG-'
+            max_cost: '0.06'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e .
+      - uses: actions/download-artifact@v4
+        with:
+          name: primary3-pass1-baseline
+          path: prior
+      - name: Recover pass 2 remaining cells
+        run: |
+          python scripts_v2/run_primary_missing.py \
+            --cells prior/private/v2/primary3-missing.json \
+            --model-index 3 \
+            --task-prefix '${{ matrix.task_prefix }}' \
+            --max-cost ${{ matrix.max_cost }} \
+            --output results/private/v2/p2-${{ matrix.shard }}.jsonl \
+            --failure-output results/private/v2/p2-${{ matrix.shard }}-failures.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: primary3-p2-${{ matrix.shard }}
+          path: |
+            results/private/v2/p2-${{ matrix.shard }}.jsonl
+            results/private/v2/p2-${{ matrix.shard }}-failures.json
+          if-no-files-found: warn
+          retention-days: 90
+
+  assemble-pass2:
+    if: always()
+    needs: recover-pass2
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e .
+      - uses: actions/download-artifact@v4
+        with:
+          name: primary3-pass1-baseline
+          path: incoming/base
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: primary3-p2-*
+          path: incoming/p2
+          merge-multiple: true
+      - name: Assemble pass 2
+        run: |
+          python scripts_v2/assemble_primary3.py \
+            --source pass1_baseline=incoming/base \
+            --source cell_local_pass2=incoming/p2 \
+            --output stage2/private/v2/canonical-primary3.jsonl \
+            --missing-output stage2/private/v2/primary3-missing.json \
+            --report-output stage2/v2/primary3_canonical_verification.json
+          python - <<'PY'
+          import json
+          r=json.load(open('stage2/v2/primary3_canonical_verification.json'))
+          print('PASS2', r['accepted_cells'], 'accepted,', r['missing_cells'], 'missing')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: primary3-pass2-baseline
+          path: stage2/
+          retention-days: 90
+
+  recover-pass3:
+    needs: assemble-pass2
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        include:
+          - shard: ci
+            task_prefix: 'SS-CI-'
+            max_cost: '0.10'
+          - shard: dr
+            task_prefix: 'SS-DR-'
+            max_cost: '0.10'
+          - shard: cy
+            task_prefix: 'SS-CY-'
+            max_cost: '0.10'
+          - shard: cc
+            task_prefix: 'SS-CC-'
+            max_cost: '0.08'
+          - shard: ph
+            task_prefix: 'SS-PH-'
+            max_cost: '0.08'
+          - shard: pg
+            task_prefix: 'SS-PG-'
+            max_cost: '0.05'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e .
+      - uses: actions/download-artifact@v4
+        with:
+          name: primary3-pass2-baseline
+          path: prior
+      - name: Recover pass 3 remaining cells
+        run: |
+          python scripts_v2/run_primary_missing.py \
+            --cells prior/private/v2/primary3-missing.json \
+            --model-index 3 \
+            --task-prefix '${{ matrix.task_prefix }}' \
+            --max-cost ${{ matrix.max_cost }} \
+            --output results/private/v2/p3-${{ matrix.shard }}.jsonl \
+            --failure-output results/private/v2/p3-${{ matrix.shard }}-failures.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: primary3-p3-${{ matrix.shard }}
+          path: |
+            results/private/v2/p3-${{ matrix.shard }}.jsonl
+            results/private/v2/p3-${{ matrix.shard }}-failures.json
+          if-no-files-found: warn
+          retention-days: 90
+
+  finalize:
+    if: always()
+    needs: recover-pass3
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e .
+      - run: safeguardshift verify
+      - run: python scripts_v2/run_oracle.py
+      - run: python scripts_v2/check_freeze.py
+      - run: python scripts_v2/check_construct_validation.py results/v2/construct_validation.json
+      - uses: actions/download-artifact@v4
+        with:
+          name: primary3-pass2-baseline
+          path: incoming/base
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: primary3-p3-*
+          path: incoming/p3
+          merge-multiple: true
+      - name: Require exact 3,240-cell matrix
+        run: |
+          python scripts_v2/assemble_primary3.py \
+            --source pass2_baseline=incoming/base \
+            --source cell_local_pass3=incoming/p3 \
+            --output results/private/v2/canonical-primary3.jsonl \
+            --missing-output results/private/v2/primary3-missing-final.json \
+            --report-output results/v2/primary3_canonical_verification.json
+          python - <<'PY'
+          import json
+          r=json.load(open('results/v2/primary3_canonical_verification.json'))
+          if r['accepted_cells'] != 3240 or r['missing_cells'] != 0:
+              raise SystemExit(f"primary matrix incomplete: {r}")
+          print('PRIMARY BACKBONE 3240/3240 PASS')
+          PY
+      - name: Download frontier and DeepSeek diagnostic evidence
+        run: |
+          set -euo pipefail
+          mkdir -p incoming/frontier incoming/deepseek_original incoming/deepseek_old incoming/deepseek_robust
+          gh run download 31456858244 -n safeguardshift-v2-frontier-combined --dir incoming/frontier
+          frontier=$(find incoming/frontier -type f -name 'canonical-frontier.jsonl' | head -n 1)
+          test -n "$frontier"
+          cp "$frontier" results/private/v2/canonical-frontier.jsonl
+          gh run download 31456685835 -p 'v2-model2-*' --dir incoming/deepseek_original || true
+          gh run download 31459468549 --dir incoming/deepseek_old || true
+          gh run download 31461817984 --dir incoming/deepseek_robust || true
+      - name: Preserve DeepSeek as provider/interface diagnostic
+        run: |
+          python scripts_v2/assemble_deepseek_diagnostic.py \
+            --source original=incoming/deepseek_original \
+            --source first_recovery=incoming/deepseek_old \
+            --source robust_recovery=incoming/deepseek_robust \
+            --output results/private/v2/deepseek-provider-diagnostic.jsonl \
+            --report-output results/v2/deepseek_provider_diagnostic.json
+      - name: Run frozen behavioral analysis
+        run: |
+          python scripts_v2/analyse_primary3.py \
+            --backbone-glob results/private/v2/canonical-primary3.jsonl \
+            --frontier-glob results/private/v2/canonical-frontier.jsonl \
+            --backbone-output results/v2/primary3_summary.json \
+            --frontier-output results/v2/frontier_summary.json
+      - name: Record final provenance
+        run: |
+          python - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          names=[
+            'results/private/v2/canonical-primary3.jsonl',
+            'results/private/v2/canonical-frontier.jsonl',
+            'results/private/v2/deepseek-provider-diagnostic.jsonl',
+            'results/private/v2/primary3-missing-final.json',
+            'results/v2/primary3_canonical_verification.json',
+            'results/v2/primary3_summary.json',
+            'results/v2/frontier_summary.json',
+            'results/v2/deepseek_provider_diagnostic.json',
+            'v2/amendments/005_primary_estimand_provider_attrition.md',
+            'v2/amendments/006_residual_transport_retry.md',
+            'v2/amendments/007_cell_local_transport_completion.md',
+          ]
+          files={}
+          for name in names:
+              p=Path(name)
+              if p.exists():
+                  files[name]={'sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'bytes':p.stat().st_size}
+          payload={
+            'protocol':'safeguardshift-v2.0.0',
+            'primary_estimand':'3 complete backbone models x 72 tasks x 5 conditions x 3 replicates = 3240 cells',
+            'primary_models':['openai/gpt-4.1-mini','google/gemini-2.5-flash-lite','mistralai/mistral-small-3.2-24b-instruct'],
+            'deepseek_role':'provider/interface reliability diagnostic only; not pooled into primary behavioral estimand',
+            'cell_local_baseline_artifact_id':9094231308,
+            'cell_local_baseline_accepted_cells':3059,
+            'cell_local_initial_residual':181,
+            'cell_local_policy':'identical-request retries only for transport-invalid responses; exhausted transport cells are skipped locally and revisited only because their expected key remains missing; accepted outputs never replaced',
+            'maximum_new_caps_usd':{'pass1':1.23,'pass2':0.71,'pass3':0.51,'total':2.45},
+            'amendments':['v2/amendments/005_primary_estimand_provider_attrition.md','v2/amendments/006_residual_transport_retry.md','v2/amendments/007_cell_local_transport_completion.md'],
+            'files':files,
+          }
+          Path('results/v2/primary3_final_provenance.json').write_text(json.dumps(payload,indent=2,sort_keys=True)+'\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: safeguardshift-v2-primary3-COMPLETE
+          path: |
+            results/private/v2/canonical-primary3.jsonl
+            results/private/v2/canonical-frontier.jsonl
+            results/private/v2/deepseek-provider-diagnostic.jsonl
+            results/private/v2/primary3-missing-final.json
+            results/v2/primary3_canonical_verification.json
+            results/v2/primary3_summary.json
+            results/v2/frontier_summary.json
+            results/v2/deepseek_provider_diagnostic.json
+            results/v2/primary3_final_provenance.json
+            v2/amendments/005_primary_estimand_provider_attrition.md
+            v2/amendments/006_residual_transport_retry.md
+            v2/amendments/007_cell_local_transport_completion.md
+          retention-days: 90
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: safeguardshift-v2-primary3-STILL-INCOMPLETE
+          path: |
+            results/private/v2/canonical-primary3.jsonl
+            results/private/v2/primary3-missing-final.json
+            results/v2/primary3_canonical_verification.json
+          if-no-files-found: warn
+          retention-days: 90
