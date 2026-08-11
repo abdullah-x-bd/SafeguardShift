@@ -1,0 +1,199 @@
+name: SafeguardShift V2 conditional final transport fallback
+on:
+  pull_request:
+    paths:
+      - 'v2/RUN_PRIMARY3_TRANSPORT_FALLBACK_FINAL'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  recover:
+    if: github.head_ref == 'run/v2-primary3-transport-fallback-prepared'
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        include:
+          - {shard: ph, prefix: 'SS-PH-', max_cost: '0.10'}
+          - {shard: ci, prefix: 'SS-CI-', max_cost: '0.18'}
+          - {shard: cy, prefix: 'SS-CY-', max_cost: '0.10'}
+          - {shard: dr, prefix: 'SS-DR-', max_cost: '0.15'}
+          - {shard: pg, prefix: 'SS-PG-', max_cost: '0.10'}
+          - {shard: cc, prefix: 'SS-CC-', max_cost: '0.10'}
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      GH_TOKEN: ${{ github.token }}
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: python -m pip install -e .
+      - run: python scripts_v2/check_freeze.py
+      - run: python scripts_v2/check_construct_validation.py results/v2/construct_validation.json
+      - name: Download fixed amendment-009 matrix and exact remaining manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p prior/source prior/fixed
+          gh run download 31475658404 -n safeguardshift-v2-primary3-FINAL81-INCOMPLETE --dir prior/source
+          baseline=$(find prior/source -type f -name canonical-primary3.jsonl | head -n 1)
+          missing=$(find prior/source -type f -name primary3-missing-final.json | head -n 1)
+          test -n "$baseline"; test -n "$missing"
+          cp "$baseline" prior/fixed/canonical-primary3.jsonl
+          cp "$missing" prior/fixed/primary3-missing-final.json
+          python - <<'PY'
+          import json
+          rows=json.load(open('prior/fixed/primary3-missing-final.json'))
+          assert rows, 'conditional fallback should only be launched for nonzero residual'
+          assert all(r['model']=='mistralai/mistral-small-3.2-24b-instruct' for r in rows)
+          print({'remaining_cells':len(rows)})
+          PY
+      - name: Recover exact residual with DeepInfra to Venice fallback
+        shell: bash
+        run: |
+          python scripts_v2/run_primary_missing_mistral_fallback.py \
+            --cells prior/fixed/primary3-missing-final.json \
+            --task-prefix '${{ matrix.prefix }}' \
+            --max-cost ${{ matrix.max_cost }} \
+            --output results/private/v2/fallback-${{ matrix.shard }}.jsonl \
+            --failure-output results/private/v2/fallback-${{ matrix.shard }}-failures.jsonl
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: primary3-fallback-${{ matrix.shard }}
+          path: |
+            results/private/v2/fallback-${{ matrix.shard }}.jsonl
+            results/private/v2/fallback-${{ matrix.shard }}-failures.jsonl
+          if-no-files-found: warn
+          retention-days: 90
+
+  finalize:
+    if: always()
+    needs: recover
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: python -m pip install -e .
+      - run: safeguardshift verify
+      - run: python scripts_v2/run_oracle.py
+      - run: python scripts_v2/check_freeze.py
+      - run: python scripts_v2/check_construct_validation.py results/v2/construct_validation.json
+      - name: Download fixed amendment-009 baseline and supporting evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p incoming/prior_source incoming/prior incoming/frontier_source incoming/deepseek_original incoming/deepseek_old incoming/deepseek_robust results/private/v2
+          gh run download 31475658404 -n safeguardshift-v2-primary3-FINAL81-INCOMPLETE --dir incoming/prior_source
+          baseline=$(find incoming/prior_source -type f -name canonical-primary3.jsonl | head -n 1)
+          missing=$(find incoming/prior_source -type f -name primary3-missing-final.json | head -n 1)
+          test -n "$baseline"; test -n "$missing"
+          cp "$baseline" incoming/prior/canonical-primary3.jsonl
+          cp "$missing" incoming/prior/primary3-missing-final.json
+          gh run download 31467929875 -n safeguardshift-v2-primary3-DONE --dir incoming/frontier_source
+          frontier=$(find incoming/frontier_source -type f -name canonical-frontier.jsonl | head -n 1)
+          test -n "$frontier"; cp "$frontier" results/private/v2/canonical-frontier.jsonl
+          gh run download 31456685835 -p 'v2-model2-*' --dir incoming/deepseek_original || true
+          gh run download 31459468549 --dir incoming/deepseek_old || true
+          gh run download 31461817984 --dir incoming/deepseek_robust || true
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: primary3-fallback-*
+          path: incoming/fallback
+          merge-multiple: true
+      - name: Assemble and require exact 3,240-cell primary matrix
+        shell: bash
+        run: |
+          python scripts_v2/assemble_primary3.py \
+            --source fixed_amendment009=incoming/prior \
+            --source deepinfra_venice_fallback=incoming/fallback \
+            --output results/private/v2/canonical-primary3.jsonl \
+            --missing-output results/private/v2/primary3-missing-final.json \
+            --report-output results/v2/primary3_canonical_verification.json
+          python - <<'PY'
+          import json
+          r=json.load(open('results/v2/primary3_canonical_verification.json'))
+          if r['accepted_cells'] != 3240 or r['missing_cells'] != 0:
+              raise SystemExit(f"primary matrix incomplete: {r}")
+          print('PRIMARY BACKBONE 3240/3240 PASS')
+          PY
+      - name: Preserve DeepSeek as provider/interface diagnostic
+        run: |
+          python scripts_v2/assemble_deepseek_diagnostic.py \
+            --source original=incoming/deepseek_original \
+            --source first_recovery=incoming/deepseek_old \
+            --source robust_recovery=incoming/deepseek_robust \
+            --output results/private/v2/deepseek-provider-diagnostic.jsonl \
+            --report-output results/v2/deepseek_provider_diagnostic.json
+      - name: Run frozen behavioral analysis
+        run: |
+          python scripts_v2/analyse_primary3.py \
+            --backbone-glob results/private/v2/canonical-primary3.jsonl \
+            --frontier-glob results/private/v2/canonical-frontier.jsonl \
+            --backbone-output results/v2/primary3_summary.json \
+            --frontier-output results/v2/frontier_summary.json
+      - name: Record final provenance
+        shell: bash
+        run: |
+          python - <<'PY'
+          import collections,hashlib,json
+          from pathlib import Path
+          providers=collections.Counter(); failure_records=0
+          for p in Path('incoming/fallback').rglob('*.jsonl'):
+              if p.name.endswith('-failures.jsonl'):
+                  failure_records += sum(1 for line in p.read_text().splitlines() if line.strip()); continue
+              for line in p.read_text().splitlines():
+                  if not line.strip(): continue
+                  row=json.loads(line)
+                  for ev in row.get('recovery_routing_events',[]):
+                      if ev.get('status') != 'accepted_response': continue
+                      md=ev.get('openrouter_metadata') or {}; selected=None
+                      for ep in ((md.get('endpoints') or {}).get('available') or []):
+                          if ep.get('selected'): selected=ep.get('provider'); break
+                      providers[str(selected or ev.get('provider') or 'unknown')]+=1
+          names=['results/private/v2/canonical-primary3.jsonl','results/private/v2/canonical-frontier.jsonl','results/private/v2/deepseek-provider-diagnostic.jsonl','results/private/v2/primary3-missing-final.json','results/v2/primary3_canonical_verification.json','results/v2/primary3_summary.json','results/v2/frontier_summary.json','results/v2/deepseek_provider_diagnostic.json','v2/amendments/005_primary_estimand_provider_attrition.md','v2/amendments/006_residual_transport_retry.md','v2/amendments/007_mistral_transport_provider_substitution.md','v2/amendments/008_mistral_tool_aware_routing.md','v2/amendments/009_per_cell_transport_continuation.md','v2/amendments/010_deepinfra_venice_transport_fallback.md']
+          files={}
+          for name in names:
+              p=Path(name)
+              if p.exists(): files[name]={'sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'bytes':p.stat().st_size}
+          original_missing=len(json.load(open('incoming/prior/primary3-missing-final.json')))
+          payload={'protocol':'safeguardshift-v2.0.0','primary_estimand':'3 backbone models x 72 tasks x 5 conditions x 3 replicates = 3240 cells','fixed_pre_fallback_cells':3240-original_missing,'conditional_fallback_missing_cells':original_missing,'fallback_provider_policy':{'order':['deepinfra','venice'],'allow_fallbacks':True,'require_parameters':True,'ignore':['mistral']},'successful_fallback_call_provider_counts':dict(providers),'fallback_failure_records':failure_records,'acceptance_policy':'fixed prior matrix has strict priority; fallback rows fill absent keys only; no accepted row replaced','deepseek_role':'provider/interface reliability diagnostic only','amendments':['005','006','007','008','009','010'],'files':files}
+          Path('results/v2/primary3_final_provenance.json').write_text(json.dumps(payload,indent=2,sort_keys=True)+'\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: safeguardshift-v2-primary3-COMPLETE
+          path: |
+            results/private/v2/canonical-primary3.jsonl
+            results/private/v2/canonical-frontier.jsonl
+            results/private/v2/deepseek-provider-diagnostic.jsonl
+            results/private/v2/primary3-missing-final.json
+            results/v2/primary3_canonical_verification.json
+            results/v2/primary3_summary.json
+            results/v2/frontier_summary.json
+            results/v2/deepseek_provider_diagnostic.json
+            results/v2/primary3_final_provenance.json
+            v2/amendments/005_primary_estimand_provider_attrition.md
+            v2/amendments/006_residual_transport_retry.md
+            v2/amendments/007_mistral_transport_provider_substitution.md
+            v2/amendments/008_mistral_tool_aware_routing.md
+            v2/amendments/009_per_cell_transport_continuation.md
+            v2/amendments/010_deepinfra_venice_transport_fallback.md
+          retention-days: 90
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: safeguardshift-v2-primary3-FALLBACK-INCOMPLETE
+          path: |
+            results/private/v2/canonical-primary3.jsonl
+            results/private/v2/primary3-missing-final.json
+            results/v2/primary3_canonical_verification.json
+          if-no-files-found: warn
+          retention-days: 90
