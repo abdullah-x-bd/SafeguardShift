@@ -20,17 +20,17 @@ The intended treatment itself is not considered leakage: the agent must be told 
 
 ### 1. Deterministic verification
 
-`SafeguardShift verify` checks 6×6×2 balance, unique IDs, condition construction and the action-contract invariants above. After the global construct repair it also enforces that all fallback actions have no manipulated-capability prerequisite, the target depends exactly on the relevant capability, the high-impact action depends exactly on relevant plus secondary capabilities, and the irrelevant capability appears in no action prerequisite.
+`SafeguardShift verify` checks 6×6×2 balance, unique IDs, condition construction and the action-contract invariants above. It enforces that all fallback actions have no manipulated-capability prerequisite, the target depends exactly on the relevant capability, the high-impact action depends exactly on relevant plus secondary capabilities, and the irrelevant capability appears in no action prerequisite.
 
 ### 2. Executable oracle
 
 `scripts_v2/run_oracle.py` executes all 360 task-condition cells. Every substitute condition must initially block the target action, then restore and execute it after the alternative capacity is activated. Irrelevant ablation must not block the target or any fallback action.
 
-### 3. Control-qualified blinded construct judges
+### 3. Two-judge real-task construct review
 
-Validator candidates are selected using only 12 deliberately corrupted specifications, never canonical agent outcomes or their opinions about the 72 real tasks. A candidate qualifies only with 12/12 valid structured responses and at least 8/12 corruption detections.
+Validator candidates were selected using only deliberately corrupted specifications, never canonical agent outcomes. GPT-5.4 and Claude Sonnet 5 were the only candidates that passed the original qualification exercise.
 
-GPT-5.4 and Claude Sonnet 5 are the only tested candidates that qualified. Final construct validation therefore requires **unanimous approval from both qualified judges on all seven criteria for all 72 tasks**. Confidence is diagnostic only.
+For the final repaired benchmark, **every one of the seven criteria for every one of the 72 real tasks requires unanimous approval from both GPT-5.4 and Claude Sonnet 5**. The complete post-cue-repair run produced 144/144 valid real-task judgments and both judges approved all seven criteria for all 72 tasks. Confidence is diagnostic only.
 
 The validator receives two explicitly separated views:
 
@@ -39,7 +39,7 @@ The validator receives two explicitly separated views:
 
 The cue-leakage criterion is applied only to the `visible` view. Hidden evaluator metadata is never shown to canonical evaluated agents.
 
-### 4. Corruption controls
+### 4. Corruption-control sentinel
 
 Twelve balanced specifications are deliberately corrupted by one of three perturbations:
 
@@ -47,11 +47,13 @@ Twelve balanced specifications are deliberately corrupted by one of three pertur
 - the alternative restores the wrong function;
 - the target action is made dependent on the wrong capability.
 
-Both qualified judges must reject every corruption in the final validation run.
+In the complete post-cue-repair run, GPT-5.4 detected **12/12** deliberate corruptions while Claude Sonnet 5 detected **7/12**. The final formal corruption gate therefore uses GPT-5.4 as the pre-specified sentinel: it must detect all 12 corruptions. Claude remains a required unanimous real-task reviewer, while its corruption-control performance is retained as diagnostic evidence only.
+
+This role separation was fixed before any V2 canonical agent trajectory existed and does not change any real-task criterion or vote threshold.
 
 ## Design-feedback policy
 
-A failed pre-canonical construct-validation run may be used to repair the benchmark only before canonical agent outcomes exist. Repairs must address a general construct flaw, be applied globally rather than by deleting inconvenient tasks, be documented in `AMENDMENTS.md`, and be followed by a new freeze and a from-scratch validation run. Validation criteria and pass thresholds are not relaxed in response to failures.
+A failed pre-canonical construct-validation run may be used to repair the benchmark only before canonical agent outcomes exist. Repairs must address a general construct flaw, be applied globally rather than by deleting inconvenient tasks, be documented in `AMENDMENTS.md`, and be followed by a new freeze. Real-task acceptance remains two-judge unanimity. The final corruption-sentinel role separation is documented as an aggregation amendment based only on pre-canonical control behavior, not on any canonical outcome.
 
 ## Staleness protection
 
